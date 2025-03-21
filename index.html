@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University of Wolves - Open Day App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1d678c;
+            --secondary: #333333;
+            --accent: #F0B310;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #28a745;
+            --info: #17a2b8;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight:bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-accent {
+            background-color: var(--accent);
+            color: var(--dark);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .hero {
+            background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://placekitten.com/1200/400');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+        
+        .prototype-section {
+            margin-top: 40px;
+            margin-bottom: 60px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        
+        .prototype-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .event-card {
+            border-left: 4px solid var(--primary);
+        }
+        
+        .event-card h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .event-meta {
+            display: flex;
+            margin-bottom: 10px;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+        
+        .event-meta div {
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .badge-subject {
+            background-color: #e9ecef;
+            color: var(--secondary);
+        }
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-btn {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .map-container {
+            height: 400px;
+            background-color: #eee;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+            max-width: 250px;
+        }
+        
+        .map-overlay h3 {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .campus-list {
+            list-style: none;
+        }
+        
+        .campus-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .campus-list li:hover {
+            color: var(--primary);
+        }
+        
+        .campus-list li.active {
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .agenda-item {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        
+        .agenda-time {
+            width: 100px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .agenda-details {
+            flex-grow: 1;
+        }
+        
+        .agenda-details h4 {
+            margin-bottom: 5px;
+        }
+        
+        .agenda-details p {
+            font-size: 0.9rem;
+            color: var(--secondary);
+        }
+        
+        .agenda-actions {
+            width: 100px;
+            text-align: right;
+        }
+        
+        .course-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .course-card h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .course-info {
+            flex-grow: 1;
+        }
+        
+        .course-info p {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .course-actions {
+            margin-top: 15px;
+        }
+        
+        .faq-item {
+            margin-bottom: 15px;
+        }
+        
+        .faq-question {
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        
+        .faq-answer {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .contact-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .contact-option {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .contact-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        footer {
+            background-color: var(--secondary);
+            color: white;
+            padding: 40px 0 20px;
+            margin-top: 60px;
+        }
+        
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+        
+        .footer-links a {
+            color: #ddd;
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .social-links a {
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .mobile-menu-icon {
+                display: block;
+                font-size: 1.5rem;
+                cursor: pointer;
+                color: white;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .map-overlay {
+                position: static;
+                max-width: 100%;
+                margin-bottom: 15px;
+            }
+            
+            .map-container {
+                height: 300px;
+            }
+            
+            .agenda-item {
+                flex-direction: column;
+            }
+            
+            .agenda-time, .agenda-actions {
+                width: 100%;
+                text-align: left;
+                margin-bottom: 10px;
+            }
+            
+            .agenda-actions {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <i class="fas fa-university"></i>
+                <span>University of Wolves</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#events">Events</a></li>
+                <li><a href="#map">Campus Map</a></li>
+                <li><a href="#courses">Courses</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="mobile-menu-icon" style="display: none;">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Landing Page -->
+        <section class="prototype-section" id="landing">
+            <h2>Landing Page</h2>
+            
+            <div class="hero">
+                <h1>Discover Your Future at Wolves</h1>
+                <p>Join us for our upcoming Open Day and explore what makes the University of Wolves the perfect place to start your journey.</p>
+                <a href="#register" class="btn btn-accent">Register Now</a>
+                <a href="#events" class="btn btn-outline" style="color: white; border-color: white;">View Schedule</a>
+            </div>
+            
+            <div class="card" style="margin-top: 30px;">
+                <h3><i class="far fa-calendar-alt"></i> Upcoming Open Days</h3>
+                <div class="grid" style="margin-top: 20px;">
+                    <div class="card event-card">
+                        <h3>Undergraduate Open Day</h3>
+                        <div class="event-meta">
+                            <div><i class="far fa-calendar"></i> 15 April 2025</div>
+                            <div><i class="far fa-clock"></i> 10:00 - 16:00</div>
+                        </div>
+                        <p>Explore our undergraduate courses, tour the campus, and meet our academic staff.</p>
+                        <div style="margin-top: 15px;">
+                            <a href="#register" class="btn btn-primary">Register</a>
+                        </div>
+                    </div>
+                    
+                    <div class="card event-card">
+                        <h3>Postgraduate Open Evening</h3>
+                        <div class="event-meta">
+                            <div><i class="far fa-calendar"></i> 22 April 2025</div>
+                            <div><i class="far fa-clock"></i> 17:00 - 20:00</div>
+                        </div>
+                        <p>Discover our postgraduate opportunities and speak with course leaders.</p>
+                        <div style="margin-top: 15px;">
+                            <a href="#register" class="btn btn-primary">Register</a>
+                        </div>
+                    </div>
+                    
+                    <div class="card event-card">
+                        <h3>Virtual Open Day</h3>
+                        <div class="event-meta">
+                            <div><i class="far fa-calendar"></i> 5 May 2025</div>
+                            <div><i class="far fa-clock"></i> 11:00 - 15:00</div>
+                        </div>
+                        <p>Can't make it in person? Join our virtual open day from anywhere in the world.</p>
+                        <div style="margin-top: 15px;">
+                            <a href="#register" class="btn btn-primary">Register</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Registration/Login Interface -->
+        <section class="prototype-section" id="register">
+            <h2>Registration Interface</h2>
+            
+            <div class="auth-container">
+                <div class="card">
+                    <h3 style="margin-bottom: 20px; text-align: center;">Register for Open Day</h3>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label for="fullname">Full Name</label>
+                            <input type="text" id="fullname" class="form-control" placeholder="Enter your full name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" class="form-control" placeholder="Enter your email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" class="form-control" placeholder="Enter your phone number">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="interest">Area of Interest</label>
+                            <select id="interest" class="form-control">
+                                <option value="">-- Select your area of interest --</option>
+                                <option value="business">Business & Management</option>
+                                <option value="computing">Computing & IT</option>
+                                <option value="engineering">Engineering</option>
+                                <option value="health">Health & Nursing</option>
+                                <option value="arts">Arts & Humanities</option>
+                                <option value="science">Science</option>
+                                <option value="social">Social Sciences</option>
+                                <option value="education">Education</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="openday">Select Open Day</label>
+                            <select id="openday" class="form-control">
+                                <option value="">-- Select an open day --</option>
+                                <option value="undergrad-april">Undergraduate Open Day - 15 April 2025</option>
+                                <option value="postgrad-april">Postgraduate Open Evening - 22 April 2025</option>
+                                <option value="virtual-may">Virtual Open Day - 5 May 2025</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox"> I would like to receive updates about courses and events
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Register Now</button>
+                    </form>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        Already registered? <a href="#login" style="color: var(--primary);">Login here</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Login Interface -->
+        <section class="prototype-section" id="login">
+            <h2>Login Interface</h2>
+            
+            <div class="auth-container">
+                <div class="card">
+                    <h3 style="margin-bottom: 20px; text-align: center;">Login to Your Account</h3>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label for="login-email">Email Address</label>
+                            <input type="email" id="login-email" class="form-control" placeholder="Enter your email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" class="form-control" placeholder="Enter your password">
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <label>
+                                <input type="checkbox"> Remember me
+                            </label>
+                            <a href="#" style="color: var(--primary);">Forgot password?</a>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+                    </form>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        Don't have an account? <a href="#register" style="color: var(--primary);">Register now</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Event Schedule Interface -->
+        <section class="prototype-section" id="events">
+            <h2>Event Schedule Interface</h2>
+            
+            <div class="card">
+                <h3>Open Day Schedule - 15 April 2025</h3>
+                
+                <div class="filters">
+                    <h4 style="width: 100%; margin-bottom: 10px;">Filter by:</h4>
+                    <button class="filter-btn active">All Events</button>
+                    <button class="filter-btn">Talks</button>
+                    <button class="filter-btn">Tours</button>
+                    <button class="filter-btn">Workshops</button>
+                    <button class="filter-btn">Business</button>
+                    <button class="filter-btn">Computing</button>
+                    <button class="filter-btn">Engineering</button>
+                    <button class="filter-btn">Arts</button>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">10:00 - 10:30</div>
+                    <div class="agenda-details">
+                        <h4>Welcome Talk</h4>
+                        <p>An introduction to the University of Wolves by our Vice-Chancellor</p>
+                        <div>
+                            <span class="badge badge-subject">All Subjects</span>
+                            <span class="badge badge-subject">Talk</span>
+                        </div>
+                        <p><i class="fas fa-map-marker-alt"></i> Main Hall, MC Building</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline"><i class="far fa-calendar-plus"></i> Add</button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">10:45 - 11:30</div>
+                    <div class="agenda-details">
+                        <h4>Computer Science Department Tour</h4>
+                        <p>Visit our state-of-the-art computing labs and learn about our facilities</p>
+                        <div>
+                            <span class="badge badge-subject">Computing</span>
+                            <span class="badge badge-subject">Tour</span>
+                        </div>
+                        <p><i class="fas fa-map-marker-alt"></i> MI Building, Floor 2</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline"><i class="far fa-calendar-plus"></i> Add</button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">11:00 - 12:00</div>
+                    <div class="agenda-details">
+                        <h4>Business School Showcase</h4>
+                        <p>Presentation on business and management courses and career opportunities</p>
+                        <div>
+                            <span class="badge badge-subject">Business</span>
+                            <span class="badge badge-subject">Talk</span>
+                        </div>
+                        <p><i class="fas fa-map-marker-alt"></i> Business School, Room B123</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline"><i class="far fa-calendar-plus"></i> Add</button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">12:00 - 13:00</div>
+                    <div class="agenda-details">
+                        <h4>Lunch Break</h4>
+                        <p>Visit our cafeterias and food outlets across campus</p>
+                        <div>
+                            <span class="badge badge-subject">All Subjects</span>
+                            <span class="badge badge-subject">Break</span>
+                        </div>
+                        <p><i class="fas fa-map-marker-alt"></i> Various Locations</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline"><i class="far fa-calendar-plus"></i> Add</button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">13:15 - 14:15</div>
+                    <div class="agenda-details">
+                        <h4>Student Finance Workshop</h4>
+                        <p>Information about tuition fees, student loans, and financial support</p>
+                        <div>
+                            <span class="badge badge-subject">All Subjects</span>
+                            <span class="badge badge-subject">Workshop</span>
+                        </div>
+                        <p><i class="fas fa-map-marker-alt"></i> Student Support Center, SC Building</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline"><i class="far fa-calendar-plus"></i> Add</button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">14:30 - 15:30</div>
+                    <div class="agenda-details">
+                        <h4>Engineering Labs Demo</h4>
+                        <p>Interactive demonstration of our engineering facilities and equipment</p>
+                        <div>
+                            <span class="badge badge-subject">Engineering</span>
+                            <span class="badge badge-subject">Demo</span>
+                        </div>
+                        <p><i class="fas fa-map-marker-alt"></i> Engineering Building, Room E112</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline"><i class="far fa-calendar-plus"></i> Add</button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">15:00 - 16:00</div>
+                    <div class="agenda-details">
+                        <h4>Accommodation Tours</h4>
+                        <p>Visit our on-campus accommodation and view the facilities</p>
+                        <div>
+                            <span class="badge badge-subject">All Subjects</span>
+                            <span class="badge badge-subject">Tour</span>
+                        </div>
+                        <p><i class="fas fa-map-marker-alt"></i> Meet at Student Hub</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline"><i class="far fa-calendar-plus"></i> Add</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Personal Agenda Interface -->
+        <section class="prototype-section" id="agenda">
+            <h2>Personal Agenda Interface</h2>
+            
+            <div class="card">
+                <h3>My Open Day Agenda</h3>
+                <p>Here's your personalized schedule for the day. You can remove events or get directions to each location.</p>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">10:00 - 10:30</div>
+                    <div class="agenda-details">
+                        <h4>Welcome Talk</h4>
+                        <p><i class="fas fa-map-marker-alt"></i> Main Hall, MC Building</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline" style="background-color: #f8f9fa;"><i class="fas fa-directions"></i></button>
+                        <button class="btn btn-outline" style="background-color: #f8f9fa; color: #dc3545;"><i class="far fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">11:00 - 12:00</div>
+                    <div class="agenda-details">
+                        <h4>Business School Showcase</h4>
+                        <p><i class="fas fa-map-marker-alt"></i> Business School, Room B123</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline" style="background-color: #f8f9fa;"><i class="fas fa-directions"></i></button>
+                        <button class="btn btn-outline" style="background-color: #f8f9fa; color: #dc3545;"><i class="far fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">12:00 - 13:00</div>
+                    <div class="agenda-details">
+                        <h4>Lunch Break</h4>
+                        <p><i class="fas fa-map-marker-alt"></i> Various Locations</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline" style="background-color: #f8f9fa;"><i class="fas fa-directions"></i></button>
+                        <button class="btn btn-outline" style="background-color: #f8f9fa; color: #dc3545;"><i class="far fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time">15:00 - 16:00</div>
+                    <div class="agenda-details">
+                        <h4>Accommodation Tours</h4>
+                        <p><i class="fas fa-map-marker-alt"></i> Meet at Student Hub</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline" style="background-color: #f8f9fa;"><i class="fas fa-directions"></i></button>
+                        <button class="btn btn-outline" style="background-color: #f8f9fa; color: #dc3545;"><i class="far fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-accent"><i class="fas fa-download"></i> Download Agenda</button>
+                    <button class="btn btn-outline"><i class="far fa-envelope"></i> Email Agenda</button>
+                </div>
+            </div>
+        </section>
+        
+
+        <section class="prototype-section" id="map">
+            <h2>Campus Map Interface</h2>
+            
+            <div class="card">
+                <h3>University Campus Map</h3>
+                
+                <div class="map-overlay">
+                    <h3>Campus Locations</h3>
+                    <ul class="campus-list">
+                        <li class="active">City Campus</li>
+                        <li>Walsall Campus</li>
+                        <li>Telford Campus</li>
+                        <li>University Quarter</li>
+                    </ul>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Find Buildings</button>
+                    </div>
+                </div>
+                
+                <div class="map-container">
+                
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #666;">
+                        <p><i class="fas fa-map-marked-alt" style="font-size: 2rem; margin-bottom: 10px; display: block; text-align: center;"></i> Interactive campus map will be displayed here</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4>Key Locations</h4>
+                    <div class="grid" style="margin-top: 15px;">
+                        <div class="card" style="margin-bottom: 10px;">
+                            <h4><i class="fas fa-building"></i> MC Building - Main Campus</h4>
+                            <p>Registration, Welcome Talks, Student Hub</p>
+                            <button class="btn btn-outline btn-sm"><i class="fas fa-directions"></i> Get Directions</button>
+                        </div>
+                        
+                        <div class="card" style="margin-bottom: 10px;">
+                            <h4><i class="fas fa-book"></i> Library</h4>
+                            <p>Study spaces, research materials, IT facilities</p>
+                            <button class="btn btn-outline btn-sm"><i class="fas fa-directions"></i> Get Directions</button>
+                        </div>
+                        
+                        <div class="card" style="margin-bottom: 10px;">
+                            <h4><i class="fas fa-coffee"></i> Student Union</h4>
+                            <p>Cafes, social spaces, student services</p>
+                            <button class="btn btn-outline btn-sm"><i class="fas fa-directions"></i> Get Directions</button>
+                        </div>
+                        
+                        <div class="card" style="margin-bottom: 10px;">
+                            <h4><i class="fas fa-home"></i> Accommodation</h4>
+                            <p>Student halls of residence and housing information</p>
+                            <button class="btn btn-outline btn-sm"><i class="fas fa-directions"></i> Get Directions</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Course Information Interface -->
+        <section class="prototype-section" id="courses">
+            <h2>Course Information Interface</h2>
+            
+            <div class="card">
+                <h3>Explore Our Courses</h3>
+                
+                <div class="filters">
+                    <h4 style="width: 100%; margin-bottom: 10px;">Filter by subject area:</h4>
+                    <button class="filter-btn active">All Subjects</button>
+                    <button class="filter-btn">Business</button>
+                    <button class="filter-btn">Computing</button>
+                    <button class="filter-btn">Creative Arts</button>
+                    <button class="filter-btn">Education</button>
+                    <button class="filter-btn">Engineering</button>
+                    <button class="filter-btn">Health</button>
+                    <button class="filter-btn">Science</button>
+                </div>
+                
+                <div class="grid" style="margin-top: 20px;">
+                    <div class="card course-card">
+                        <h3>BSc Computer Science</h3>
+                        <div class="course-info">
+                            <p><strong>Faculty:</strong> Science and Engineering</p>
+                            <p><strong>Duration:</strong> 3 years full-time</p>
+                            <p><strong>UCAS Code:</strong> G400</p>
+                            <p>Develop a strong foundation in programming, systems development, and emerging technologies in our industry-accredited course.</p>
+                        </div>
+                        <div class="course-actions">
+                            <button class="btn btn-primary btn-sm">Course Details</button>
+                            <button class="btn btn-outline btn-sm">Add to Favorites</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card course-card">
+                        <h3>BA Business Management</h3>
+                        <div class="course-info">
+                            <p><strong>Faculty:</strong> Business School</p>
+                            <p><strong>Duration:</strong> 3 years full-time</p>
+                            <p><strong>UCAS Code:</strong> N200</p>
+                            <p>Gain a comprehensive understanding of business operations, strategy, and leadership for a successful career in management.</p>
+                        </div>
+                        <div class="course-actions">
+                            <button class="btn btn-primary btn-sm">Course Details</button>
+                            <button class="btn btn-outline btn-sm">Add to Favorites</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card course-card">
+                        <h3>BEng Mechanical Engineering</h3>
+                        <div class="course-info">
+                            <p><strong>Faculty:</strong> Science and Engineering</p>
+                            <p><strong>Duration:</strong> 3 years full-time</p>
+                            <p><strong>UCAS Code:</strong> H300</p>
+                            <p>Design, analyze, and optimize mechanical systems using our advanced laboratories and industry partnerships.</p>
+                        </div>
+                        <div class="course-actions">
+                            <button class="btn btn-primary btn-sm">Course Details</button>
+                            <button class="btn btn-outline btn-sm">Add to Favorites</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card course-card">
+                        <h3>BA Graphic Design</h3>
+                        <div class="course-info">
+                            <p><strong>Faculty:</strong> Arts</p>
+                            <p><strong>Duration:</strong> 3 years full-time</p>
+                            <p><strong>UCAS Code:</strong> W210</p>
+                            <p>Express your creativity and develop professional design skills for print, digital, and multimedia platforms.</p>
+                        </div>
+                        <div class="course-actions">
+                            <button class="btn btn-primary btn-sm">Course Details</button>
+                            <button class="btn btn-outline btn-sm">Add to Favorites</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- FAQ Interface -->
+        <section class="prototype-section" id="faq">
+            <h2>FAQ Interface</h2>
+            
+            <div class="card">
+                <h3>Frequently Asked Questions</h3>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>What should I bring to the Open Day?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We recommend bringing:</p>
+                        <ul>
+                            <li>Comfortable shoes for walking around campus</li>
+                            <li>Your registration confirmation (digital or printed)</li>
+                            <li>A notepad and pen for taking notes</li>
+                            <li>A bottle of water</li>
+                            <li>Questions you'd like to ask staff and students</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How do I get to the University?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>The University of Wolves City Campus is located in the heart of Wolverhampton city center. You can reach us by:</p>
+                        <ul>
+                            <li><strong>Train:</strong> Wolves train station is a 10-minute walk from campus</li>
+                            <li><strong>Bus:</strong> Multiple bus routes stop near the campus</li>
+                            <li><strong>Car:</strong> Limited parking is available on campus (pre-booking required)</li>
+                        </ul>
+                        <p>Detailed directions can be found in the "Getting Here" section of this app.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Can I bring family members to the Open Day?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes, absolutely! We encourage you to bring family members or friends who may be helping you with your university decision. All visitors should be registered in advance so we can plan accordingly.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Will I be able to see accommodation during the Open Day?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes, we offer tours of our university accommodation during all Open Days. These tours run regularly throughout the day and can be booked at the Accommodation stand when you arrive, or you can add them to your personal agenda in advance using this app.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How can I change or cancel my Open Day registration?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>You can modify or cancel your registration by logging into your account on this app and visiting the "My Bookings" section. Alternatively, you can contact our Open Day team at openday@wlv.ac.uk or call 01902 321000.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Contact Interface -->
+        <section class="prototype-section" id="contact">
+            <h2>Contact Interface</h2>
+            
+            <div class="card">
+                <h3>Get in Touch</h3>
+                <p style="margin-bottom: 20px;">Have questions about the Open Day or studying at the University of Wolves? Contact us using one of the methods below.</p>
+                
+                <div class="contact-options">
+                    <div class="card contact-option">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <h4>Email Us</h4>
+                        <p>openday@wlv.ac.uk</p>
+                        <p>We aim to respond within 24 hours</p>
+                    </div>
+                    
+                    <div class="card contact-option">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <h4>Call Us</h4>
+                        <p>01902 321000</p>
+                        <p>Mon-Fri, 9am-5pm</p>
+                    </div>
+                    
+                    <div class="card contact-option">
+                        <div class="contact-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h4>Live Chat</h4>
+                        <p>Chat with our advisors online</p>
+                        <button class="btn btn-primary btn-sm" style="margin-top: 10px;">Start Chat</button>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 30px;">
+                    <h4>Send us a Message</h4>
+                    
+                    <form>
+                        <div class="form-group">
+                            <label for="contact-name">Your Name</label>
+                            <input type="text" id="contact-name" class="form-control" placeholder="Enter your name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="contact-email">Email Address</label>
+                            <input type="email" id="contact-email" class="form-control" placeholder="Enter your email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="contact-subject">Subject</label>
+                            <input type="text" id="contact-subject" class="form-control" placeholder="What is your query about?">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="contact-message">Message</label>
+                            <textarea id="contact-message" class="form-control" rows="4" placeholder="Type your message here"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Feedback Interface -->
+        <section class="prototype-section" id="feedback">
+            <h2>Feedback Interface</h2>
+            
+            <div class="card">
+                <h3>Your Open Day Feedback</h3>
+                <p style="margin-bottom: 20px;">Thank you for attending our Open Day! Please take a moment to share your experience and help us improve future events.</p>
+                
+                <form>
+                    <div class="form-group">
+                        <label>How would you rate your overall Open Day experience?</label>
+                        <div style="display: flex; gap: 15px; margin-top: 10px;">
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="rating" value="5"> Excellent
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="rating" value="4"> Very Good
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="rating" value="3"> Good
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="rating" value="2"> Fair
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="radio" name="rating" value="1"> Poor
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Which aspects of the Open Day did you find most useful? (Select all that apply)</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" name="useful" value="talks"> Subject talks
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" name="useful" value="tours"> Campus tours
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" name="useful" value="accommodation"> Accommodation viewings
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" name="useful" value="staff"> Speaking with staff
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" name="useful" value="students"> Speaking with current students
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 5px;">
+                                <input type="checkbox" name="useful" value="finance"> Finance information
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="feedback-improve">What could we improve about our Open Days?</label>
+                        <textarea id="feedback-improve" class="form-control" rows="3" placeholder="Please share your suggestions"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="feedback-comments">Any other comments or feedback?</label>
+                        <textarea id="feedback-comments" class="form-control" rows="3" placeholder="Additional comments"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                </form>
+            </div>
+        </section>
+        
+        <!-- Notifications Interface -->
+        <section class="prototype-section" id="notifications">
+            <h2>Notifications Interface</h2>
+            
+            <div class="card">
+                <h3>Your Notifications</h3>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time" style="width: auto; padding-right: 15px;">
+                        <i class="fas fa-bell" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="agenda-details">
+                        <h4>Room Change for Computer Science Talk</h4>
+                        <p>The Computer Science department talk has been moved to room MI101.</p>
+                        <p style="font-size: 0.8rem; color: #666;">10 minutes ago</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline btn-sm" style="background-color: #f8f9fa;"><i class="fas fa-check"></i></button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time" style="width: auto; padding-right: 15px;">
+                        <i class="fas fa-calendar-alt" style="color: var(--info);"></i>
+                    </div>
+                    <div class="agenda-details">
+                        <h4>Reminder: Student Finance Workshop</h4>
+                        <p>Your booked session starts in 30 minutes at the Student Support Center.</p>
+                        <p style="font-size: 0.8rem; color: #666;">25 minutes ago</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline btn-sm" style="background-color: #f8f9fa;"><i class="fas fa-check"></i></button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time" style="width: auto; padding-right: 15px;">
+                        <i class="fas fa-info-circle" style="color: var(--accent);"></i>
+                    </div>
+                    <div class="agenda-details">
+                        <h4>Additional Engineering Demo Added</h4>
+                        <p>A new robotics demonstration has been added at 14:00 in the Engineering Building.</p>
+                        <p style="font-size: 0.8rem; color: #666;">1 hour ago</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline btn-sm" style="background-color: #f8f9fa;"><i class="fas fa-check"></i></button>
+                    </div>
+                </div>
+                
+                <div class="agenda-item">
+                    <div class="agenda-time" style="width: auto; padding-right: 15px;">
+                        <i class="fas fa-envelope" style="color: var(--secondary);"></i>
+                    </div>
+                    <div class="agenda-details">
+                        <h4>Welcome to the Open Day</h4>
+                        <p>Thank you for registering for our Open Day. We look forward to welcoming you to campus.</p>
+                        <p style="font-size: 0.8rem; color: #666;">Yesterday</p>
+                    </div>
+                    <div class="agenda-actions">
+                        <button class="btn btn-outline btn-sm" style="background-color: #f8f9fa;"><i class="fas fa-check"></i></button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-outline">Mark All as Read</button>
+                    <button class="btn btn-outline">Notification Settings</button>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p>University of Wolves</p>
+                    <p>Wulfruna Street, Wolverhampton</p>
+                    <p>WV1 1LY, United Kingdom</p>
+                    <p>Phone: 01902 321000</p>
+                    <p>Email: enquiries@wlv.ac.uk</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="#landing">Home</a></li>
+                        <li><a href="#register">Register</a></li>
+                        <li><a href="#events">Events</a></li>
+                        <li><a href="#map">Campus Map</a></li>
+                        <li><a href="#courses">Courses</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Accommodation</a></li>
+                        <li><a href="#">Student Finance</a></li>
+                        <li><a href="#">International Students</a></li>
+                        <li><a href="#">Accessibility</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Follow Us</h3>
+                    <p>Stay connected with us on social media</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2025 University of Wolves. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Simple JavaScript for toggling FAQ answers
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const answer = question.nextElementSibling;
+                const isVisible = answer.style.display !== 'none';
+                
+                if (isVisible) {
+                    answer.style.display = 'none';
+                    question.querySelector('i').className = 'fas fa-chevron-down';
+                } else {
+                    answer.style.display = 'block';
+                    question.querySelector('i').className = 'fas fa-chevron-up';
+                }
+            });
+        });
+        
+        // Toggle filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>

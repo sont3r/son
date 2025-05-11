@@ -1,0 +1,3008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University of Wolverhampton | Open Day</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#5D5CDE',
+                            dark: '#4a49b0',
+                            light: '#7b7ae7'
+                        },
+                        wlv: {
+                            red: '#BE1622',
+                            blue: '#1E3A8A',
+                            gray: '#F3F4F6',
+                            darkgray: '#374151'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Additional custom styles */
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .page-transition {
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .toast {
+            animation: slide-in 0.3s ease-out forwards, fade-out 0.5s ease-in 2.5s forwards;
+            transform: translateY(100%);
+        }
+        
+        @keyframes slide-in {
+            to { transform: translateY(0); }
+        }
+        
+        @keyframes fade-out {
+            to { opacity: 0; }
+        }
+        
+        /* Calendar view styles */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        
+        .calendar-event {
+            border-left: 4px solid;
+            transition: transform 0.2s ease;
+        }
+        
+        .calendar-event:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Timeline styles */
+        .timeline {
+            position: relative;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 16px;
+            width: 2px;
+            background-color: #e5e7eb;
+        }
+        
+        .timeline-item {
+            position: relative;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: 12px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #5D5CDE;
+            transform: translateY(100%);
+        }
+        
+        .timeline-content {
+            margin-left: 36px;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
+    <!-- Debug panel -->
+<div id="debug-panel" style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; z-index: 9999; max-width: 80%; max-height: 200px; overflow: auto; border-radius: 4px; font-family: monospace; font-size: 12px;">
+    <h3>API Debug</h3>
+    <div id="debug-content">Loading...</div>
+</div>
+
+<div id="api-debug" style="position: fixed; top: 0; right: 0; background: rgba(0,0,0,0.8); color: white; padding: 10px; z-index: 9999; max-width: 400px; max-height: 200px; overflow: auto;">
+    <h3>API Debug</h3>
+    <div id="api-status"></div>
+    <button onclick="this.parentNode.style.display='none'">Close</button>
+</div>
+
+<script>
+    function testApi() {
+    const apiStatus = document.getElementById('api-status');
+    apiStatus.innerHTML = "Testing API connection...";
+    
+    // Test if the API is reachable
+    fetch('/api/test')
+        .then(response => {
+            apiStatus.innerHTML += `<p>API Test: ${response.status} ${response.statusText}</p>`;
+            return response.text();
+        })
+        .then(data => {
+            apiStatus.innerHTML += `<p>Response: ${data}</p>`;
+        })
+        .catch(error => {
+            apiStatus.innerHTML += `<p>Error: ${error.message}</p>`;
+        });
+}
+
+// Call this when the page loads
+document.addEventListener('DOMContentLoaded', testApi);
+// Add this right after the debug panel HTML
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugContent = document.getElementById('debug-content');
+            
+            // Test basic API endpoints
+            fetch('/api/opendays')
+                .then(response => {
+                    debugContent.innerHTML += `<p>Open Days API: ${response.status} ${response.statusText}</p>`;
+                    return response.json();
+                })
+                .then(data => {
+                    debugContent.innerHTML += `<p>Open Days data: ${JSON.stringify(data).substring(0, 100)}...</p>`;
+                })
+                .catch(error => {
+                    debugContent.innerHTML += `<p>Open Days error: ${error.message}</p>`;
+                });
+                
+            fetch('/api/courses/subject-areas')
+                .then(response => {
+                    debugContent.innerHTML += `<p>Subject Areas API: ${response.status} ${response.statusText}</p>`;
+                    return response.json();
+                })
+                .then(data => {
+                    debugContent.innerHTML += `<p>Subject Areas data: ${JSON.stringify(data).substring(0, 100)}...</p>`;
+                })
+                .catch(error => {
+                    debugContent.innerHTML += `<p>Subject Areas error: ${error.message}</p>`;
+                });
+        });
+</script>
+    <!-- Toast notifications container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+    
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-md">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex flex-wrap items-center justify-between">
+                <a href="#" class="flex items-center" data-page="home">
+                    <img src="University-of-Wolverhampton-CMYK.png" 
+                         alt="University of Wolverhampton" class="h-10 dark:hidden">
+                    <img src="https://www.wlv.ac.uk/lib/media/departments/marketing-and-communications/brand/UoW_PRIMARY_WHITE.png" 
+                         alt="University of Wolverhampton" class="h-10 hidden dark:block">
+                </a>
+                
+                <div class="flex items-center space-x-1 md:space-x-4">
+                    <nav class="hidden md:flex items-center space-x-1" id="main-nav">
+                        <!-- Navigation links will be inserted dynamically based on auth state -->
+                    </nav>
+                    
+                    <button id="darkModeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                    
+                    <div class="md:hidden">
+                        <button id="mobileMenuBtn" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="md:hidden hidden px-4 py-2 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
+            <nav class="flex flex-col space-y-2 py-2" id="mobile-nav">
+                <!-- Mobile navigation links will be inserted dynamically based on auth state -->
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main content -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <!-- Page content will be inserted dynamically -->
+        <div id="page-content" class="page-transition">
+            <!-- Initial loading state -->
+            <div class="flex justify-center items-center h-64">
+                <div class="text-center">
+                    <div class="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-4"></div>
+                    <p class="text-gray-500 dark:text-gray-400">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-wlv-blue text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">University of Wolverhampton</h3>
+                    <address class="not-italic text-sm text-gray-300 space-y-1">
+                        <p>City Campus, Wulfruna Street</p>
+                        <p>Wolverhampton, WV1 1LY</p>
+                        <p>United Kingdom</p>
+                        <p class="mt-2">Tel: +44 1902 321000</p>
+                    </address>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Quick Links</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-primary-light transition-colors">Contact Us</a></li>
+                        <li><a href="#" class="hover:text-primary-light transition-colors">Find Us</a></li>
+                        <li><a href="#" class="hover:text-primary-light transition-colors">University Website</a></li>
+                        <li><a href="#" class="hover:text-primary-light transition-colors">Student Portal</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Connect With Us</h3>
+                    <div class="flex space-x-4 text-2xl">
+                        <a href="#" class="hover:text-primary-light transition-colors"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="hover:text-primary-light transition-colors"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="hover:text-primary-light transition-colors"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="hover:text-primary-light transition-colors"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="hover:text-primary-light transition-colors"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="text-sm font-semibold mb-2">Subscribe to our newsletter</h4>
+                        <form class="flex">
+                            <input type="email" placeholder="Your email address" 
+                                class="px-3 py-2 text-base text-black rounded-l focus:outline-none flex-grow" required>
+                            <button type="submit" class="bg-wlv-red hover:bg-red-700 px-4 py-2 rounded-r text-white transition-colors">
+                                Subscribe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-blue-800 mt-8 pt-6 text-sm text-gray-300 flex flex-col md:flex-row justify-between items-center">
+                <p>&copy; 2023 University of Wolverhampton. All rights reserved.</p>
+                <div class="flex space-x-4 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-primary-light transition-colors">Privacy Policy</a>
+                    <a href="#" class="hover:text-primary-light transition-colors">Terms of Use</a>
+                    <a href="#" class="hover:text-primary-light transition-colors">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Auth Modal -->
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+                <h2 id="authModalTitle" class="text-xl font-semibold">Sign In</h2>
+                <button id="closeAuthModal" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="authModalContent" class="p-6">
+                <!-- Auth form content will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Templates -->
+    <!-- These templates will be used to dynamically generate page content -->
+    
+    <!-- Home Page Template -->
+    <template id="home-template">
+        <div class="space-y-10">
+            <!-- Hero Banner -->
+            <section class="bg-wlv-blue text-white rounded-xl overflow-hidden shadow-lg relative">
+                <div class="absolute inset-0 bg-gradient-to-r from-wlv-blue to-transparent"></div>
+                <div class="relative z-10 px-6 py-12 md:py-20 md:px-12 max-w-3xl">
+                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Discover Your Future at Wolverhampton</h1>
+                    <p class="text-lg mb-8 text-gray-100">Explore our campuses, meet our staff and students, and find out what it's like to study at the University of Wolverhampton.</p>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="exploreOpenDaysBtn" class="bg-wlv-red hover:bg-red-700 px-6 py-3 rounded font-medium transition-colors">
+                            Explore Open Days
+                        </button>
+                        <button id="watchVideoBtn" class="bg-transparent border-2 border-white hover:bg-white hover:text-wlv-blue px-6 py-3 rounded font-medium transition-colors">
+                            <i class="fas fa-play mr-2"></i> Watch Video
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Upcoming Open Days -->
+            <section>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Upcoming Open Days</h2>
+                    <a href="#" class="text-primary hover:text-primary-dark transition-colors flex items-center" data-page="open-days">
+                        View All <i class="fas fa-chevron-right ml-1 text-sm"></i>
+                    </a>
+                </div>
+                
+                <div id="upcomingOpenDays" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Upcoming open days will be loaded here -->
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-6 h-48"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-6 h-48"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-6 h-48"></div>
+                </div>
+            </section>
+            
+            <!-- What to Expect -->
+            <section class="bg-gray-50 dark:bg-gray-800 -mx-4 px-4 py-10">
+                <div class="container mx-auto">
+                    <h2 class="text-2xl font-bold mb-8 text-center">What to Expect at Our Open Days</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-6 text-center">
+                            <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 text-wlv-blue dark:text-blue-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-graduation-cap text-2xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-lg mb-2">Subject Talks</h3>
+                            <p class="text-gray-600 dark:text-gray-300">Learn about our courses from academic staff and current students.</p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-6 text-center">
+                            <div class="w-16 h-16 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-building text-2xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-lg mb-2">Campus Tours</h3>
+                            <p class="text-gray-600 dark:text-gray-300">Explore our facilities, student spaces, and accommodation options.</p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-6 text-center">
+                            <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-comments text-2xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-lg mb-2">Q&A Sessions</h3>
+                            <p class="text-gray-600 dark:text-gray-300">Get answers to your questions about admissions, accommodation, and student life.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Subject Areas -->
+            <section>
+                <h2 class="text-2xl font-bold mb-6">Explore Our Subject Areas</h2>
+                
+                <div id="subjectAreas" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <!-- Subject areas will be loaded here -->
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-24"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-24"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-24"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-24"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-24"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-24"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-24"></div>
+                    <div class="animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-24"></div>
+                </div>
+            </section>
+            
+            <!-- Testimonials -->
+            <section class="bg-wlv-blue text-white -mx-4 px-4 py-10 rounded-lg">
+                <div class="container mx-auto">
+                    <h2 class="text-2xl font-bold mb-8 text-center">What Our Students Say</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                                <div>
+                                    <h3 class="font-semibold">Sarah Johnson</h3>
+                                    <p class="text-sm text-gray-300">BSc Computer Science</p>
+                                </div>
+                            </div>
+                            <p class="italic">"Attending the open day helped me make my final decision. Seeing the facilities and talking to current students gave me confidence that Wolverhampton was the right choice for me."</p>
+                        </div>
+                        
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                                <div>
+                                    <h3 class="font-semibold">Mohammed Ali</h3>
+                                    <p class="text-sm text-gray-300">BA Business Management</p>
+                                </div>
+                            </div>
+                            <p class="italic">"The campus tour was excellent, and the staff were so helpful in answering all my questions. I got a real feel for what student life would be like here."</p>
+                        </div>
+                        
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                                <div>
+                                    <h3 class="font-semibold">Emma Thompson</h3>
+                                    <p class="text-sm text-gray-300">BSc Nursing</p>
+                                </div>
+                            </div>
+                            <p class="italic">"I was blown away by the nursing facilities during the open day. Being able to see the simulation suite and talk to actual nursing students really helped me understand what to expect."</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Call to Action -->
+            <section class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 text-center">
+                <h2 class="text-2xl font-bold mb-4">Ready to Join Us?</h2>
+                <p class="text-lg mb-6 max-w-2xl mx-auto">Book your place at our next open day and take the first step towards your future at the University of Wolverhampton.</p>
+                <button id="bookOpenDayBtn" class="bg-wlv-red hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                    Book Your Place Now
+                </button>
+            </section>
+        </div>
+    </template>
+    
+    <!-- Open Days List Template -->
+    <template id="open-days-template">
+        <div class="space-y-8">
+            <div class="bg-wlv-blue text-white rounded-lg p-6 md:p-8">
+                <h1 class="text-2xl md:text-3xl font-bold mb-4">Open Days</h1>
+                <p class="max-w-3xl">Experience what it's like to study at the University of Wolverhampton. Meet our staff and students, tour our facilities, and get all your questions answered.</p>
+            </div>
+            
+            <!-- Filters -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div class="w-full md:w-auto flex-grow">
+                        <label class="block text-sm font-medium mb-1">Date Range</label>
+                        <div class="flex space-x-2">
+                            <input type="date" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 text-base">
+                            <span class="self-center">to</span>
+                            <input type="date" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 text-base">
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:w-auto flex-grow">
+                        <label class="block text-sm font-medium mb-1">Campus</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 text-base">
+                            <option value="">All Campuses</option>
+                            <option value="city">City Campus</option>
+                            <option value="walsall">Walsall Campus</option>
+                            <option value="telford">Telford Campus</option>
+                        </select>
+                    </div>
+                    
+                    <div class="w-full md:w-auto">
+                        <button class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded transition-colors">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Open Days List -->
+            <div id="openDaysList" class="space-y-4">
+                <!-- Open days will be loaded here -->
+                <div class="animate-pulse bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-1/4">
+                        <div class="bg-gray-200 dark:bg-gray-700 h-24 rounded-lg"></div>
+                    </div>
+                    <div class="w-full md:w-3/4 space-y-4">
+                        <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    </div>
+                </div>
+                
+                <div class="animate-pulse bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-1/4">
+                        <div class="bg-gray-200 dark:bg-gray-700 h-24 rounded-lg"></div>
+                    </div>
+                    <div class="w-full md:w-3/4 space-y-4">
+                        <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Virtual Tour Promo -->
+            <div class="bg-wlv-blue text-white rounded-lg p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
+                <div class="md:w-2/3">
+                    <h2 class="text-xl font-bold mb-2">Can't Make It to an Open Day?</h2>
+                    <p class="mb-4">Take a virtual tour of our campuses and facilities at your convenience.</p>
+                    <button class="bg-white text-wlv-blue hover:bg-gray-100 px-6 py-2 rounded transition-colors">
+                        Start Virtual Tour
+                    </button>
+                </div>
+                <div class="md:w-1/3 flex justify-center">
+                    <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-vr-cardboard text-4xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Open Day Detail Template -->
+    <template id="open-day-detail-template">
+        <div class="space-y-8">
+            <!-- Header info will be populated dynamically -->
+            <div id="openDayHeader" class="bg-wlv-blue text-white rounded-lg p-6 md:p-8 animate-pulse">
+                <div class="h-8 bg-white/20 rounded w-1/2 mb-4"></div>
+                <div class="h-4 bg-white/20 rounded w-3/4 mb-2"></div>
+                <div class="h-4 bg-white/20 rounded w-full"></div>
+            </div>
+            
+            <!-- Registration Banner -->
+            <div id="registrationBanner" class="hidden bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-lg p-4 flex items-center space-x-2">
+                <i class="fas fa-check-circle text-xl"></i>
+                <div>
+                    <p class="font-semibold">You're registered for this open day!</p>
+                    <p class="text-sm">We look forward to seeing you.</p>
+                </div>
+            </div>
+            
+            <!-- Registration Form (shows if not registered) -->
+            <div id="registrationForm" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Register for this Open Day</h2>
+                <form id="openDayRegistrationForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1" for="interestArea">Area of Interest</label>
+                            <select id="interestArea" name="interestArea" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 text-base" required>
+                                <option value="">Select an area</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="flex items-end pb-3">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="receiveUpdates" class="rounded border-gray-300 text-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600">
+                                <span class="ml-2">Receive updates about this open day</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" id="registerBtn" class="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded transition-colors">
+                            Register
+                        </button>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Registration closes 24 hours before the event.</p>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Tabs -->
+            <div>
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <nav class="flex flex-wrap -mb-px">
+                        <button class="tab-btn inline-block p-4 text-primary font-medium border-b-2 border-primary rounded-t-lg" data-tab="schedule">
+                            <i class="fas fa-calendar-alt mr-2"></i>Schedule
+                        </button>
+                        <button class="tab-btn inline-block p-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-medium border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 rounded-t-lg" data-tab="information">
+                            <i class="fas fa-info-circle mr-2"></i>Information
+                        </button>
+                        <button class="tab-btn inline-block p-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-medium border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 rounded-t-lg" data-tab="location">
+                            <i class="fas fa-map-marker-alt mr-2"></i>Location
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Tab Content -->
+                <div class="py-6">
+                    <!-- Schedule Tab -->
+                    <div id="schedule-tab" class="tab-content">
+                        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <h2 class="text-xl font-semibold mb-1">Event Schedule</h2>
+                                <p class="text-gray-600 dark:text-gray-400">All times are in local time (GMT/BST)</p>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <div class="flex items-center">
+                                    <label class="mr-2 text-sm">Filter by:</label>
+                                    <select id="eventFilter" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 text-base text-sm">
+                                        <option value="">All Events</option>
+                                        <option value="talk">Talks</option>
+                                        <option value="tour">Tours</option>
+                                        <option value="workshop">Workshops</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="flex space-x-1">
+                                    <button class="view-toggle-btn bg-gray-200 dark:bg-gray-700 p-2 rounded-l" data-view="timeline" title="Timeline View">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                    <button class="view-toggle-btn bg-primary text-white p-2 rounded-r" data-view="grid" title="Grid View">
+                                        <i class="fas fa-th-large"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline View (hidden by default) -->
+                        <div id="timeline-view" class="hidden space-y-6">
+                            <!-- Events will be loaded here -->
+                            <div class="animate-pulse space-y-4">
+                                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                                <div class="timeline relative pl-8">
+                                    <div class="timeline-item pb-6">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content bg-gray-200 dark:bg-gray-700 h-24 rounded-lg"></div>
+                                    </div>
+                                    <div class="timeline-item pb-6">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content bg-gray-200 dark:bg-gray-700 h-24 rounded-lg"></div>
+                                    </div>
+                                    <div class="timeline-item pb-6">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content bg-gray-200 dark:bg-gray-700 h-24 rounded-lg"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Grid View -->
+                        <div id="grid-view" class="space-y-6">
+                            <!-- Events will be loaded here -->
+                            <div class="animate-pulse space-y-4">
+                                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                                <div class="calendar-grid">
+                                    <div class="bg-gray-200 dark:bg-gray-700 h-40 rounded-lg"></div>
+                                    <div class="bg-gray-200 dark:bg-gray-700 h-40 rounded-lg"></div>
+                                    <div class="bg-gray-200 dark:bg-gray-700 h-40 rounded-lg"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- My Agenda Section -->
+                        <div id="my-agenda-section" class="mt-10 hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold">My Agenda</h3>
+                                <button id="downloadAgendaBtn" class="text-sm flex items-center text-primary hover:text-primary-dark">
+                                    <i class="fas fa-download mr-1"></i> Download
+                                </button>
+                            </div>
+                            
+                            <div id="myAgendaItems" class="space-y-3">
+                                <!-- Agenda items will be loaded here -->
+                                <p class="text-gray-500 dark:text-gray-400 text-center py-4">No events added to your agenda yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Information Tab -->
+                    <div id="information-tab" class="tab-content hidden space-y-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">About This Open Day</h3>
+                            <div id="openDayDescription" class="prose dark:prose-invert max-w-none">
+                                <!-- Description will be loaded here -->
+                                <div class="animate-pulse space-y-2">
+                                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-3">What to Bring</h3>
+                                <ul class="space-y-2">
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                        <span>Comfortable shoes for campus tours</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                        <span>Umbrella or raincoat (just in case!)</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                        <span>A list of questions you'd like to ask</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                        <span>Your registration confirmation (on your phone is fine)</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                        <span>A notebook or device for taking notes</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-3">Parking & Travel Information</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <h4 class="font-medium">By Car</h4>
+                                        <p class="text-gray-600 dark:text-gray-400">Limited parking available on campus. We recommend using nearby public car parks.</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium">By Train</h4>
+                                        <p class="text-gray-600 dark:text-gray-400">Wolverhampton station is a 10-minute walk from City Campus.</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium">By Bus</h4>
+                                        <p class="text-gray-600 dark:text-gray-400">Several bus routes stop near our campuses. See local transport information for details.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">Accommodation</h3>
+                            <p class="mb-4">If you're traveling from far and need accommodation, here are some options near our campuses:</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                                    <h4 class="font-medium mb-1">Premier Inn Wolverhampton</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">0.5 miles from City Campus</p>
+                                    <a href="#" class="text-primary hover:text-primary-dark text-sm">View Details</a>
+                                </div>
+                                
+                                <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                                    <h4 class="font-medium mb-1">Novotel Wolverhampton</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">0.8 miles from City Campus</p>
+                                    <a href="#" class="text-primary hover:text-primary-dark text-sm">View Details</a>
+                                </div>
+                                
+                                <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                                    <h4 class="font-medium mb-1">Holiday Inn Express</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">1.2 miles from City Campus</p>
+                                    <a href="#" class="text-primary hover:text-primary-dark text-sm">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">Accessibility</h3>
+                            <p class="mb-2">We aim to make our open days accessible to everyone. If you have any specific requirements, please let us know when you register.</p>
+                            <p>Facilities available include:</p>
+                            
+                            <ul class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                                <li class="flex items-center">
+                                    <i class="fas fa-wheelchair text-primary mr-2"></i>
+                                    <span>Wheelchair access</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-assistive-listening-systems text-primary mr-2"></i>
+                                    <span>Hearing loops</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-toilet text-primary mr-2"></i>
+                                    <span>Accessible toilets</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-car text-primary mr-2"></i>
+                                    <span>Accessible parking</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Location Tab -->
+                    <div id="location-tab" class="tab-content hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-2">
+                                <div class="bg-gray-200 dark:bg-gray-700 rounded-lg h-96 flex items-center justify-center">
+                                    <p class="text-gray-500 dark:text-gray-400">Map will load here</p>
+                                    <!-- Map would be implemented with Google Maps or similar -->
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
+                                    <h3 class="font-semibold mb-2">Campus Address</h3>
+                                    <address class="not-italic text-gray-600 dark:text-gray-400">
+                                        <p id="campusAddress">Loading address...</p>
+                                    </address>
+                                </div>
+                                
+                                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                                    <h3 class="font-semibold mb-2">Buildings</h3>
+                                    <ul id="buildingsList" class="space-y-2">
+                                        <!-- Buildings will be loaded here -->
+                                        <li class="animate-pulse h-6 bg-gray-200 dark:bg-gray-700 rounded"></li>
+                                        <li class="animate-pulse h-6 bg-gray-200 dark:bg-gray-700 rounded"></li>
+                                        <li class="animate-pulse h-6 bg-gray-200 dark:bg-gray-700 rounded"></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Event Detail Template (for modal) -->
+    <template id="event-detail-template">
+        <div class="p-6 space-y-4">
+            <div id="eventTypeTag" class="inline-block px-2 py-1 text-xs font-semibold rounded"></div>
+            
+            <h2 id="eventTitle" class="text-xl font-semibold"></h2>
+            
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center">
+                    <i class="far fa-clock text-gray-500 dark:text-gray-400 mr-2"></i>
+                    <span id="eventTime"></span>
+                </div>
+                
+                <div class="flex items-center">
+                    <i class="far fa-building text-gray-500 dark:text-gray-400 mr-2"></i>
+                    <span id="eventLocation"></span>
+                </div>
+                
+                <div id="eventPresenterContainer" class="flex items-center">
+                    <i class="far fa-user text-gray-500 dark:text-gray-400 mr-2"></i>
+                    <span id="eventPresenter"></span>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="font-medium mb-2">Description</h3>
+                <div id="eventDescription" class="text-gray-600 dark:text-gray-300">
+                    Loading description...
+                </div>
+            </div>
+            
+            <div id="capacityContainer" class="flex items-center mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <i class="fas fa-users mr-2"></i>
+                <span id="eventCapacity"></span>
+            </div>
+            
+            <div class="flex space-x-3 mt-4 pt-4 border-t dark:border-gray-700">
+                <button id="addToAgendaBtn" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded transition-colors flex items-center">
+                    <i class="fas fa-plus mr-2"></i> Add to My Agenda
+                </button>
+                
+                <button id="removeFromAgendaBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors flex items-center hidden">
+                    <i class="fas fa-minus mr-2"></i> Remove from Agenda
+                </button>
+            </div>
+        </div>
+    </template>
+    
+    <!-- My Agenda Template -->
+    <template id="my-agenda-template">
+        <div class="space-y-8">
+            <div class="bg-primary text-white rounded-lg p-6 md:p-8">
+                <h1 class="text-2xl md:text-3xl font-bold mb-4">My Agenda</h1>
+                <p>Plan your visit by adding events to your personal agenda.</p>
+            </div>
+            
+            <div id="agendaContent" class="space-y-6">
+                <!-- Content will be loaded dynamically -->
+                <div class="animate-pulse space-y-6">
+                    <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    <div class="calendar-grid">
+                        <div class="bg-gray-200 dark:bg-gray-700 h-40 rounded-lg"></div>
+                        <div class="bg-gray-200 dark:bg-gray-700 h-40 rounded-lg"></div>
+                    </div>
+                    
+                    <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mt-8"></div>
+                    <div class="calendar-grid">
+                        <div class="bg-gray-200 dark:bg-gray-700 h-40 rounded-lg"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Export Options</h2>
+                <div class="flex flex-wrap gap-4">
+                    <button id="downloadPdfBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="far fa-file-pdf mr-2"></i> PDF
+                    </button>
+                    
+                    <button id="addToCalendarBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="far fa-calendar-alt mr-2"></i> Add to Calendar
+                    </button>
+                    
+                    <button id="emailAgendaBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="far fa-envelope mr-2"></i> Email to Me
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Login Template -->
+    <template id="login-template">
+        <div class="space-y-4">
+            <div id="loginError" class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-3 rounded-lg hidden"></div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="loginEmail" class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="loginEmail" required 
+                           class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                
+                <div>
+                    <label for="loginPassword" class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="loginPassword" required 
+                           class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" class="rounded border-gray-300 text-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600">
+                        <span class="ml-2 text-sm">Remember me</span>
+                    </label>
+                    
+                    <a href="#" class="text-sm text-primary hover:text-primary-dark">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded transition-colors">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="text-center">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Don't have an account? 
+                    <button type="button" id="switchToRegister" class="text-primary hover:text-primary-dark">Register</button>
+                </p>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Register Template -->
+    <template id="register-template">
+        <div class="space-y-4">
+            <div id="registerError" class="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-3 rounded-lg hidden"></div>
+            
+            <form id="registerForm" class="space-y-4">
+                <div>
+                    <label for="registerFullName" class="block text-sm font-medium mb-1">Full Name</label>
+                    <input type="text" id="registerFullName" required 
+                           class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                
+                <div>
+                    <label for="registerEmail" class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="registerEmail" required 
+                           class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                
+                <div>
+                    <label for="registerPassword" class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="registerPassword" required 
+                           class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Must be at least 8 characters and include a number and special character
+                    </p>
+                </div>
+                
+                <div>
+                    <label for="registerPhone" class="block text-sm font-medium mb-1">Phone Number (optional)</label>
+                    <input type="tel" id="registerPhone" 
+                           class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                
+                <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded transition-colors">
+                    Register
+                </button>
+            </form>
+            
+            <div class="text-center">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Already have an account? 
+                    <button type="button" id="switchToLogin" class="text-primary hover:text-primary-dark">Sign In</button>
+                </p>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Event Modal -->
+    <div id="eventModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+                <h2 class="text-xl font-semibold">Event Details</h2>
+                <button id="closeEventModal" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="eventModalContent">
+                <!-- Event details will be inserted here -->
+                <div class="animate-pulse p-6 space-y-4">
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    <div class="flex space-x-4">
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                    </div>
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-6"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main JavaScript for the Open Day application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Application starting...");
+            // API Configuration
+            const API_BASE_URL = window.location.origin + '/api'; // Dynamically set based on current domain
+            
+            // Application State
+            const state = {
+                currentPage: 'home',
+                user: null,
+                token: localStorage.getItem('token'),
+                refreshToken: localStorage.getItem('refreshToken'),
+                openDays: [],
+                events: [],
+                subjectAreas: [],
+                buildings: [],
+                currentOpenDay: null,
+                userAgenda: [],
+                isAuthenticated: false
+            };
+            
+            // DOM Elements
+            const pageContent = document.getElementById('page-content');
+            const mainNav = document.getElementById('main-nav');
+            const mobileNav = document.getElementById('mobile-nav');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const authModal = document.getElementById('authModal');
+            const authModalTitle = document.getElementById('authModalTitle');
+            const authModalContent = document.getElementById('authModalContent');
+            const closeAuthModal = document.getElementById('closeAuthModal');
+            const eventModal = document.getElementById('eventModal');
+            const eventModalContent = document.getElementById('eventModalContent');
+            const closeEventModal = document.getElementById('closeEventModal');
+            const toastContainer = document.getElementById('toast-container');
+            
+            // Initialize the application
+            init();
+            
+            // Main initialization function
+            function init() {
+                // Check for dark mode preference
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                }
+                
+                // Set up event listeners
+                setupEventListeners();
+                
+                // Check authentication status
+                checkAuthStatus();
+                
+                // Load initial page (home by default)
+                navigateTo('home');
+            }
+            
+            // Setup event listeners
+            function setupEventListeners() {
+                // Dark mode toggle
+                darkModeToggle.addEventListener('click', toggleDarkMode);
+                
+                // Mobile menu toggle
+                mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+                
+                // Auth modal close button
+                closeAuthModal.addEventListener('click', closeModals);
+                
+                // Event modal close button
+                closeEventModal.addEventListener('click', closeModals);
+                
+                // Close modals when clicking outside
+                window.addEventListener('click', function(event) {
+                    if (event.target === authModal) {
+                        closeModals();
+                    } else if (event.target === eventModal) {
+                        closeModals();
+                    }
+                });
+                
+                // Handle navigation links
+                document.addEventListener('click', function(e) {
+                    // Navigation links with data-page attribute
+                    if (e.target.matches('[data-page]') || e.target.closest('[data-page]')) {
+                        e.preventDefault();
+                        const link = e.target.closest('[data-page]');
+                        const page = link.getAttribute('data-page');
+                        const id = link.getAttribute('data-id');
+                        navigateTo(page, id);
+                        
+                        // Close mobile menu if open
+                        if (!mobileMenu.classList.contains('hidden')) {
+                            toggleMobileMenu();
+                        }
+                    }
+                });
+            }
+            
+            // Toggle dark mode
+            function toggleDarkMode() {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+            }
+            
+            // Toggle mobile menu
+            function toggleMobileMenu() {
+                mobileMenu.classList.toggle('hidden');
+            }
+            
+            // Close modals
+            function closeModals() {
+                authModal.classList.add('hidden');
+                eventModal.classList.add('hidden');
+            }
+            
+            // Show the auth modal
+            function showAuthModal(type = 'login') {
+                authModalTitle.textContent = type === 'login' ? 'Sign In' : 'Register';
+                
+                // Get and clone the appropriate template
+                const template = document.getElementById(`${type}-template`);
+                const content = template.content.cloneNode(true);
+                
+                // Clear previous content and append new content
+                authModalContent.innerHTML = '';
+                authModalContent.appendChild(content);
+                
+                // Set up form submission and switch links
+                if (type === 'login') {
+                    const loginForm = document.getElementById('loginForm');
+                    const switchToRegister = document.getElementById('switchToRegister');
+                    
+                    loginForm.addEventListener('submit', handleLogin);
+                    switchToRegister.addEventListener('click', () => showAuthModal('register'));
+                } else {
+                    const registerForm = document.getElementById('registerForm');
+                    const switchToLogin = document.getElementById('switchToLogin');
+                    
+                    registerForm.addEventListener('submit', handleRegister);
+                    switchToLogin.addEventListener('click', () => showAuthModal('login'));
+                }
+                
+                // Show the modal
+                authModal.classList.remove('hidden');
+            }
+            
+            // Show the event modal
+            function showEventModal(eventId) {
+                // Show loading state
+                eventModal.classList.remove('hidden');
+                
+                // Get and clone the template
+                const template = document.getElementById('event-detail-template');
+                const content = template.content.cloneNode(true);
+                
+                // Clear previous content and append new content
+                eventModalContent.innerHTML = '';
+                eventModalContent.appendChild(content);
+                
+                // Fetch event details
+                fetchEventDetails(eventId).then(event => {
+                    updateEventModalContent(event);
+                }).catch(error => {
+                    console.error('Error fetching event details:', error);
+                    showToast('Error loading event details', 'error');
+                });
+            }
+            
+            // Update event modal content with event data
+            function updateEventModalContent(event) {
+                const eventTypeTag = document.getElementById('eventTypeTag');
+                const eventTitle = document.getElementById('eventTitle');
+                const eventTime = document.getElementById('eventTime');
+                const eventLocation = document.getElementById('eventLocation');
+                const eventPresenterContainer = document.getElementById('eventPresenterContainer');
+                const eventPresenter = document.getElementById('eventPresenter');
+                const eventDescription = document.getElementById('eventDescription');
+                const capacityContainer = document.getElementById('capacityContainer');
+                const eventCapacity = document.getElementById('eventCapacity');
+                const addToAgendaBtn = document.getElementById('addToAgendaBtn');
+                const removeFromAgendaBtn = document.getElementById('removeFromAgendaBtn');
+                
+                // Set event type with appropriate color
+                let typeColor = '';
+                switch(event.event_type.toLowerCase()) {
+                    case 'talk':
+                        typeColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+                        break;
+                    case 'tour':
+                        typeColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+                        break;
+                    case 'workshop':
+                        typeColor = 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+                        break;
+                    default:
+                        typeColor = 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+                }
+                
+                eventTypeTag.className = `inline-block px-2 py-1 text-xs font-semibold rounded ${typeColor}`;
+                eventTypeTag.textContent = event.event_type;
+                
+                // Set other event details
+                eventTitle.textContent = event.title;
+                
+                // Format time (e.g., "10:00 AM - 11:30 AM")
+                const startTime = formatTime(event.start_time);
+                const endTime = formatTime(event.end_time);
+                eventTime.textContent = `${startTime} - ${endTime}`;
+                
+                // Set location
+                let locationText = 'TBD';
+                if (event.building && event.room) {
+                    locationText = `${event.building.name}, Room ${event.room}`;
+                } else if (event.building) {
+                    locationText = event.building.name;
+                } else if (event.room) {
+                    locationText = `Room ${event.room}`;
+                }
+                eventLocation.textContent = locationText;
+                
+                // Set presenter info if available
+                if (event.presenter) {
+                    eventPresenter.textContent = event.presenter;
+                } else {
+                    eventPresenterContainer.classList.add('hidden');
+                }
+                
+                // Set description
+                eventDescription.textContent = event.description || 'No description available.';
+                
+                // Set capacity info if available
+                if (event.capacity) {
+                    eventCapacity.textContent = `Capacity: ${event.capacity} people`;
+                } else {
+                    capacityContainer.classList.add('hidden');
+                }
+                
+                // Set up add/remove to agenda buttons
+                const isInAgenda = state.userAgenda.some(item => item.event_id === event.id);
+                
+                if (isInAgenda) {
+                    addToAgendaBtn.classList.add('hidden');
+                    removeFromAgendaBtn.classList.remove('hidden');
+                } else {
+                    addToAgendaBtn.classList.remove('hidden');
+                    removeFromAgendaBtn.classList.add('hidden');
+                }
+                
+                // Event listeners for agenda buttons
+                addToAgendaBtn.addEventListener('click', () => addToAgenda(event.id));
+                removeFromAgendaBtn.addEventListener('click', () => removeFromAgenda(event.id));
+            }
+            
+            // Format time (e.g., "10:00" to "10:00 AM")
+            function formatTime(timeString) {
+                const [hours, minutes] = timeString.split(':');
+                const hour = parseInt(hours, 10);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const formattedHour = hour % 12 || 12;
+                return `${formattedHour}:${minutes} ${ampm}`;
+            }
+            
+            // Check authentication status
+            function checkAuthStatus() {
+                if (state.token) {
+                    // Verify token by making a request to the auth/me endpoint
+                    fetch(`${API_BASE_URL}/auth/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${state.token}`
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            // Token invalid, try refresh token
+                            return refreshToken();
+                        }
+                    })
+                    .then(data => {
+                        if (data.user) {
+                            // Update user state and UI
+                            state.user = data.user;
+                            state.isAuthenticated = true;
+                            updateNavigation();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Auth check error:', error);
+                        // Clear tokens and update UI for logged out state
+                        logoutUser();
+                    });
+                } else {
+                    // No token, user is not authenticated
+                    state.isAuthenticated = false;
+                    updateNavigation();
+                }
+            }
+            
+            // Refresh the access token using the refresh token
+            function refreshToken() {
+                if (!state.refreshToken) {
+                    return Promise.reject('No refresh token available');
+                }
+                
+                return fetch(`${API_BASE_URL}/auth/refresh`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${state.refreshToken}`
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Refresh token invalid');
+                    }
+                })
+                .then(data => {
+                    // Update the access token
+                    state.token = data.access_token;
+                    localStorage.setItem('token', data.access_token);
+                    
+                    // Return a request to get user data with the new token
+                    return fetch(`${API_BASE_URL}/auth/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${state.token}`
+                        }
+                    }).then(response => response.json());
+                });
+            }
+            
+            // Handle login form submission
+            function handleLogin(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const loginError = document.getElementById('loginError');
+                
+                // Hide any previous error
+                loginError.classList.add('hidden');
+                
+                // Call the login API
+                fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        // Show error message
+                        loginError.textContent = data.error;
+                        loginError.classList.remove('hidden');
+                    } else {
+                        // Login successful
+                        state.user = data.user;
+                        state.token = data.access_token;
+                        state.refreshToken = data.refresh_token;
+                        state.isAuthenticated = true;
+                        
+                        // Save tokens to localStorage
+                        localStorage.setItem('token', data.access_token);
+                        localStorage.setItem('refreshToken', data.refresh_token);
+                        
+                        // Update UI
+                        updateNavigation();
+                        closeModals();
+                        showToast('Login successful!', 'success');
+                        
+                        // Reload current page to update any auth-dependent content
+                        navigateTo(state.currentPage);
+                    }
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    loginError.textContent = 'An error occurred. Please try again.';
+                    loginError.classList.remove('hidden');
+                });
+            }
+            
+            // Handle register form submission
+            function handleRegister(e) {
+                e.preventDefault();
+                
+                const fullName = document.getElementById('registerFullName').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const phone = document.getElementById('registerPhone').value;
+                const registerError = document.getElementById('registerError');
+                
+                // Hide any previous error
+                registerError.classList.add('hidden');
+                
+                // Call the register API
+                fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        full_name: fullName,
+                        email,
+                        password,
+                        phone
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        // Show error message
+                        registerError.textContent = data.error;
+                        registerError.classList.remove('hidden');
+                    } else {
+                        // Registration successful
+                        state.user = data.user;
+                        state.token = data.access_token;
+                        state.refreshToken = data.refresh_token;
+                        state.isAuthenticated = true;
+                        
+                        // Save tokens to localStorage
+                        localStorage.setItem('token', data.access_token);
+                        localStorage.setItem('refreshToken', data.refresh_token);
+                        
+                        // Update UI
+                        updateNavigation();
+                        closeModals();
+                        showToast('Registration successful!', 'success');
+                        
+                        // Reload current page to update any auth-dependent content
+                        navigateTo(state.currentPage);
+                    }
+                })
+                .catch(error => {
+                    console.error('Registration error:', error);
+                    registerError.textContent = 'An error occurred. Please try again.';
+                    registerError.classList.remove('hidden');
+                });
+            }
+            
+            // Logout the user
+            function logoutUser() {
+                state.user = null;
+                state.token = null;
+                state.refreshToken = null;
+                state.isAuthenticated = false;
+                state.userAgenda = [];
+                
+                // Clear tokens from localStorage
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                
+                // Update UI
+                updateNavigation();
+                showToast('Logged out successfully', 'success');
+                
+                // If on a page that requires authentication, redirect to home
+                const authRequiredPages = ['my-agenda'];
+                if (authRequiredPages.includes(state.currentPage)) {
+                    navigateTo('home');
+                } else {
+                    // Reload current page to update any auth-dependent content
+                    navigateTo(state.currentPage);
+                }
+            }
+            
+            // Update navigation based on auth state
+            function updateNavigation() {
+                // Clear existing navigation
+                mainNav.innerHTML = '';
+                mobileNav.innerHTML = '';
+                
+                // Common navigation links
+                const links = [
+                    { text: 'Home', page: 'home', icon: 'fa-home' },
+                    { text: 'Open Days', page: 'open-days', icon: 'fa-calendar-alt' },
+                    { text: 'Subject Areas', page: 'subject-areas', icon: 'fa-book' },
+                    { text: 'Maps', page: 'maps', icon: 'fa-map-marker-alt' }
+                ];
+                
+                // Add links for authenticated users
+                if (state.isAuthenticated) {
+                    links.push({ text: 'My Agenda', page: 'my-agenda', icon: 'fa-list-check' });
+                }
+                
+                // Create main navigation
+                links.forEach(link => {
+                    const navItem = document.createElement('a');
+                    navItem.href = '#';
+                    navItem.setAttribute('data-page', link.page);
+                    navItem.className = `px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${state.currentPage === link.page ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}`;
+                    navItem.textContent = link.text;
+                    mainNav.appendChild(navItem);
+                });
+                
+                // Create mobile navigation
+                links.forEach(link => {
+                    const navItem = document.createElement('a');
+                    navItem.href = '#';
+                    navItem.setAttribute('data-page', link.page);
+                    navItem.className = `px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${state.currentPage === link.page ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}`;
+                    navItem.innerHTML = `<i class="fas ${link.icon} w-6 text-center"></i> ${link.text}`;
+                    mobileNav.appendChild(navItem);
+                });
+                
+                // Add auth buttons
+                if (state.isAuthenticated) {
+                    // Desktop auth dropdown
+                    const authDropdown = document.createElement('div');
+                    authDropdown.className = 'relative ml-4';
+                    authDropdown.innerHTML = `
+                        <button id="userMenuBtn" class="flex items-center space-x-1 px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <span class="hidden md:inline-block">${state.user.full_name.split(' ')[0]}</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div id="userMenu" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded shadow-lg py-1 hidden z-20">
+                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-user-circle mr-2"></i>Profile
+                            </a>
+                            <a href="#" data-page="my-agenda" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-list-check mr-2"></i>My Agenda
+                            </a>
+                            <a href="#" id="logoutBtn" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </a>
+                        </div>
+                    `;
+                    mainNav.appendChild(authDropdown);
+                    
+                    // Mobile logout button
+                    const mobileLogout = document.createElement('a');
+                    mobileLogout.href = '#';
+                    mobileLogout.id = 'mobileLogoutBtn';
+                    mobileLogout.className = 'px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400';
+                    mobileLogout.innerHTML = '<i class="fas fa-sign-out-alt w-6 text-center"></i> Logout';
+                    mobileNav.appendChild(mobileLogout);
+                    
+                    // Add event listeners for dropdowns and logout
+                    document.getElementById('userMenuBtn').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        document.getElementById('userMenu').classList.toggle('hidden');
+                    });
+                    
+                    document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+                    document.getElementById('mobileLogoutBtn').addEventListener('click', logoutUser);
+                    
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', function() {
+                        document.getElementById('userMenu').classList.add('hidden');
+                    });
+                } else {
+                    // Login/Register buttons for non-authenticated users
+                    const authButtons = document.createElement('div');
+                    authButtons.className = 'flex items-center space-x-2 ml-4';
+                    authButtons.innerHTML = `
+                        <button id="loginBtn" class="px-3 py-1.5 text-sm border border-primary text-primary hover:bg-primary hover:text-white rounded transition-colors">
+                            Sign In
+                        </button>
+                        <button id="registerBtn" class="px-3 py-1.5 text-sm bg-primary text-white hover:bg-primary-dark rounded transition-colors">
+                            Register
+                        </button>
+                    `;
+                    mainNav.appendChild(authButtons);
+                    
+                    // Mobile auth buttons
+                    const mobileLogin = document.createElement('a');
+                    mobileLogin.href = '#';
+                    mobileLogin.id = 'mobileLoginBtn';
+                    mobileLogin.className = 'px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700';
+                    mobileLogin.innerHTML = '<i class="fas fa-sign-in-alt w-6 text-center"></i> Sign In';
+                    mobileNav.appendChild(mobileLogin);
+                    
+                    const mobileRegister = document.createElement('a');
+                    mobileRegister.href = '#';
+                    mobileRegister.id = 'mobileRegisterBtn';
+                    mobileRegister.className = 'px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700';
+                    mobileRegister.innerHTML = '<i class="fas fa-user-plus w-6 text-center"></i> Register';
+                    mobileNav.appendChild(mobileRegister);
+                    
+                    // Add event listeners
+                    document.getElementById('loginBtn').addEventListener('click', () => showAuthModal('login'));
+                    document.getElementById('registerBtn').addEventListener('click', () => showAuthModal('register'));
+                    document.getElementById('mobileLoginBtn').addEventListener('click', () => {
+                        showAuthModal('login');
+                        toggleMobileMenu();
+                    });
+                    document.getElementById('mobileRegisterBtn').addEventListener('click', () => {
+                        showAuthModal('register');
+                        toggleMobileMenu();
+                    });
+                }
+            }
+            
+            // Navigation function
+            function navigateTo(page, id = null) {
+                // Update current page in state
+                state.currentPage = page;
+                
+                // Check if page requires authentication
+                const authRequiredPages = ['my-agenda'];
+                if (authRequiredPages.includes(page) && !state.isAuthenticated) {
+                    showAuthModal('login');
+                    return;
+                }
+                
+                // Update active navigation links
+                updateNavigation();
+                
+                // Clear current content with fade-out effect
+                pageContent.style.opacity = '0';
+                
+                // After fade out, load new content
+                setTimeout(() => {
+                    // Load appropriate page content
+                    switch (page) {
+                        case 'home':
+                            loadHomePage();
+                            break;
+                        case 'open-days':
+                            loadOpenDaysPage();
+                            break;
+                        case 'open-day-detail':
+                            loadOpenDayDetailPage(id);
+                            break;
+                        case 'my-agenda':
+                            loadMyAgendaPage();
+                            break;
+                        case 'subject-areas':
+                            loadSubjectAreasPage();
+                            break;
+                        case 'maps':
+                            loadMapsPage();
+                            break;
+                        default:
+                            loadHomePage();
+                    }
+                    
+                    // Fade in new content
+                    setTimeout(() => {
+                        pageContent.style.opacity = '1';
+                    }, 50);
+                }, 300);
+            }
+            
+            // Load home page content
+            function loadHomePage() {
+                // Get and clone the template
+                const template = document.getElementById('home-template');
+                const content = template.content.cloneNode(true);
+                
+                // Clear previous content and append new content
+                pageContent.innerHTML = '';
+                pageContent.appendChild(content);
+                
+                // Set up event listeners
+                document.getElementById('exploreOpenDaysBtn').addEventListener('click', () => navigateTo('open-days'));
+                document.getElementById('bookOpenDayBtn').addEventListener('click', () => navigateTo('open-days'));
+                
+                // Fetch upcoming open days
+                fetchUpcomingOpenDays();
+                
+                // Fetch subject areas
+                fetchSubjectAreas();
+            }
+            
+            // Load open days page content
+            function loadOpenDaysPage() {
+                // Get and clone the template
+                const template = document.getElementById('open-days-template');
+                const content = template.content.cloneNode(true);
+                
+                // Clear previous content and append new content
+                pageContent.innerHTML = '';
+                pageContent.appendChild(content);
+                
+                // Fetch open days
+                fetchOpenDays();
+            }
+            
+            // Load open day detail page content
+            function loadOpenDayDetailPage(openDayId) {
+                if (!openDayId) {
+                    navigateTo('open-days');
+                    return;
+                }
+                
+                // Get and clone the template
+                const template = document.getElementById('open-day-detail-template');
+                const content = template.content.cloneNode(true);
+                
+                // Clear previous content and append new content
+                pageContent.innerHTML = '';
+                pageContent.appendChild(content);
+                
+                // Set up tab switching
+                setupTabs();
+                
+                // Set up view toggle
+                setupViewToggle();
+                
+                // Fetch open day details
+                fetchOpenDayDetails(openDayId);
+                
+                // If user is logged in, check registration status and fetch agenda
+                if (state.isAuthenticated) {
+                    checkRegistrationStatus(openDayId);
+                    fetchUserAgenda(openDayId);
+                } else {
+                    // Show login prompt for registration
+                    const registrationForm = document.getElementById('registrationForm');
+                    registrationForm.classList.remove('hidden');
+                    const registerBtn = document.getElementById('registerBtn');
+                    
+                    // Override normal submit behavior to show login modal
+                    document.getElementById('openDayRegistrationForm').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        showAuthModal('login');
+                    });
+                }
+            }
+            
+            // Load my agenda page content
+            function loadMyAgendaPage() {
+                // Get and clone the template
+                const template = document.getElementById('my-agenda-template');
+                const content = template.content.cloneNode(true);
+                
+                // Clear previous content and append new content
+                pageContent.innerHTML = '';
+                pageContent.appendChild(content);
+                
+                // Fetch user agenda across all open days
+                fetchUserAgenda();
+            }
+            
+            // Load subject areas page content
+            function loadSubjectAreasPage() {
+                // For this demo, redirect to home
+                navigateTo('home');
+                showToast('Subject Areas page coming soon!', 'info');
+            }
+            
+            // Load maps page content
+            function loadMapsPage() {
+                // For this demo, redirect to home
+                navigateTo('home');
+                showToast('Maps page coming soon!', 'info');
+            }
+            
+            // Set up tab switching functionality
+            function setupTabs() {
+                const tabButtons = document.querySelectorAll('.tab-btn');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        // Remove active class from all buttons
+                        tabButtons.forEach(btn => {
+                            btn.classList.remove('text-primary', 'border-primary');
+                            btn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300', 'hover:border-gray-300', 'dark:hover:border-gray-600');
+                        });
+                        
+                        // Add active class to clicked button
+                        button.classList.add('text-primary', 'border-primary');
+                        button.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300', 'hover:border-gray-300', 'dark:hover:border-gray-600');
+                        
+                        // Hide all tab contents
+                        tabContents.forEach(content => {
+                            content.classList.add('hidden');
+                        });
+                        
+                        // Show the selected tab content
+                        const tabId = button.getAttribute('data-tab');
+                        document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+                    });
+                });
+            }
+            
+            // Set up view toggle functionality
+            function setupViewToggle() {
+                const viewToggleButtons = document.querySelectorAll('.view-toggle-btn');
+                const timelineView = document.getElementById('timeline-view');
+                const gridView = document.getElementById('grid-view');
+                
+                viewToggleButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        // Remove active class from all buttons
+                        viewToggleButtons.forEach(btn => {
+                            btn.classList.remove('bg-primary', 'text-white');
+                            btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
+                        });
+                        
+                        // Add active class to clicked button
+                        button.classList.add('bg-primary', 'text-white');
+                        button.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+                        
+                        // Toggle views
+                        const viewType = button.getAttribute('data-view');
+                        if (viewType === 'timeline') {
+                            timelineView.classList.remove('hidden');
+                            gridView.classList.add('hidden');
+                        } else {
+                            timelineView.classList.add('hidden');
+                            gridView.classList.remove('hidden');
+                        }
+                    });
+                });
+            }
+            
+            // API Functions
+            
+            // Fetch upcoming open days for the home page
+            function fetchUpcomingOpenDays() {
+
+                const fallbackData = [
+                    { id: 1, name: "Business and Management" },
+                    { id: 2, name: "Computing and Computer Science" },
+                    { id: 3, name: "Education and Teaching" },
+                    { id: 4, name: "Engineering" },
+                    { id: 5, name: "Health and Social Care" },
+                    { id: 6, name: "Law" },
+                    { id: 7, name: "Science" },
+                    { id: 8, name: "Arts and Humanities" }
+                ];
+
+                fetch(`${API_BASE_URL}/opendays`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.open_days && data.open_days.length > 0) {
+                            // Sort by date and take the first 3
+                            const upcomingOpenDays = data.open_days
+                                .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+                                .slice(0, 3);
+                            
+                            // Update the state
+                            state.openDays = upcomingOpenDays;
+                            
+                            // Update the UI
+                            renderUpcomingOpenDays(upcomingOpenDays);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching upcoming open days:', error);
+                        // Use fallback data on error
+                        console.log("Using fallback upcoming open day data due to error");
+                        state.subjectAreas = fallbackData;
+                        renderSubjectAreas(fallbackData);
+                    });
+            }
+            
+            // Fetch all open days for the open days page
+            function fetchOpenDays() {
+                fetch(`${API_BASE_URL}/opendays`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.open_days) {
+                            // Sort by date
+                            const openDays = data.open_days.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+                            
+                            // Update the state
+                            state.openDays = openDays;
+                            
+                            // Update the UI
+                            renderOpenDaysList(openDays);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching open days:', error);
+                        showToast('Error loading open days', 'error');
+                    });
+            }
+            
+            // Fetch open day details including events
+            function fetchOpenDayDetails(openDayId) {
+                // Fetch open day details
+                fetch(`${API_BASE_URL}/opendays/${openDayId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.open_day) {
+                            // Update the state
+                            state.currentOpenDay = data.open_day;
+                            
+                            // Update the UI
+                            renderOpenDayHeader(data.open_day);
+                            
+                            // Fetch events for this open day
+                            fetchEvents(openDayId);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching open day details:', error);
+                        showToast('Error loading open day details', 'error');
+                    });
+            }
+            
+            // Fetch events for an open day
+            function fetchEvents(openDayId) {
+                fetch(`${API_BASE_URL}/events?open_day_id=${openDayId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.events) {
+                            // Sort by start time
+                            const events = data.events.sort((a, b) => {
+                                return a.start_time.localeCompare(b.start_time);
+                            });
+                            
+                            // Update the state
+                            state.events = events;
+                            
+                            // Update the UI
+                            renderEvents(events);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching events:', error);
+                        showToast('Error loading events', 'error');
+                    });
+            }
+            
+            // Fetch event details
+            function fetchEventDetails(eventId) {
+                // First check if we already have this event in state
+                const event = state.events.find(e => e.id === parseInt(eventId));
+                if (event) {
+                    return Promise.resolve(event);
+                }
+                
+                // If not, fetch it from the API
+                return fetch(`${API_BASE_URL}/events/${eventId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.event) {
+                            return data.event;
+                        } else {
+                            throw new Error('Event not found');
+                        }
+                    });
+            }
+            
+            // Check registration status for an open day
+            function checkRegistrationStatus(openDayId) {
+                if (!state.isAuthenticated) return;
+                
+                fetch(`${API_BASE_URL}/registrations`, {
+                    headers: {
+                        'Authorization': `Bearer ${state.token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.registrations) {
+                        const isRegistered = data.registrations.some(reg => reg.open_day_id === parseInt(openDayId));
+                        
+                        // Update UI based on registration status
+                        if (isRegistered) {
+                            document.getElementById('registrationBanner').classList.remove('hidden');
+                            document.getElementById('registrationForm').classList.add('hidden');
+                        } else {
+                            document.getElementById('registrationBanner').classList.add('hidden');
+                            document.getElementById('registrationForm').classList.remove('hidden');
+                            
+                            // Set up the registration form
+                            setupRegistrationForm(openDayId);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking registration status:', error);
+                });
+            }
+            
+            // Set up the registration form
+            function setupRegistrationForm(openDayId) {
+                const form = document.getElementById('openDayRegistrationForm');
+                const interestAreaSelect = document.getElementById('interestArea');
+                
+                // Fetch subject areas for the dropdown
+                fetch(`${API_BASE_URL}/courses/subject-areas`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.subject_areas) {
+                            // Populate the dropdown
+                            data.subject_areas.forEach(area => {
+                                const option = document.createElement('option');
+                                option.value = area.id;
+                                option.textContent = area.name;
+                                interestAreaSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching subject areas:', error);
+                    });
+                
+                // Handle form submission
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const interestArea = interestAreaSelect.value;
+                    const receiveUpdates = form.querySelector('input[name="receiveUpdates"]').checked;
+                    
+                    // Register for the open day
+                    registerForOpenDay(openDayId, interestArea, receiveUpdates);
+                });
+            }
+            
+            // Register for an open day
+            function registerForOpenDay(openDayId, interestArea, receiveUpdates) {
+                fetch(`${API_BASE_URL}/register/openday/${openDayId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.token}`
+                    },
+                    body: JSON.stringify({
+                        interest_area: interestArea,
+                        receive_updates: receiveUpdates
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showToast(data.error, 'error');
+                    } else {
+                        showToast('Successfully registered for this open day!', 'success');
+                        
+                        // Update UI
+                        document.getElementById('registrationBanner').classList.remove('hidden');
+                        document.getElementById('registrationForm').classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error registering for open day:', error);
+                    showToast('Error registering for open day', 'error');
+                });
+            }
+            
+            // Fetch user agenda
+            function fetchUserAgenda(openDayId = null) {
+                if (!state.isAuthenticated) return;
+                
+                let url = `${API_BASE_URL}/agenda`;
+                if (openDayId) {
+                    url += `?open_day_id=${openDayId}`;
+                }
+                
+                fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${state.token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.agenda) {
+                        // Update the state
+                        state.userAgenda = data.agenda;
+                        
+                        // Update the UI
+                        if (state.currentPage === 'my-agenda') {
+                            renderMyAgendaPage(data.agenda);
+                        } else if (state.currentPage === 'open-day-detail') {
+                            renderMyAgendaSection(data.agenda);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching user agenda:', error);
+                });
+            }
+            
+            // Add an event to the user's agenda
+            function addToAgenda(eventId) {
+                if (!state.isAuthenticated) {
+                    showAuthModal('login');
+                    return;
+                }
+                
+                fetch(`${API_BASE_URL}/agenda/add/${eventId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${state.token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showToast(data.error, 'error');
+                    } else {
+                        showToast('Event added to your agenda', 'success');
+                        
+                        // Update the modal buttons
+                        const addBtn = document.getElementById('addToAgendaBtn');
+                        const removeBtn = document.getElementById('removeFromAgendaBtn');
+                        
+                        addBtn.classList.add('hidden');
+                        removeBtn.classList.remove('hidden');
+                        
+                        // Refresh the agenda
+                        if (state.currentOpenDay) {
+                            fetchUserAgenda(state.currentOpenDay.id);
+                        } else {
+                            fetchUserAgenda();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding event to agenda:', error);
+                    showToast('Error adding event to agenda', 'error');
+                });
+            }
+            
+            // Remove an event from the user's agenda
+            function removeFromAgenda(eventId) {
+                fetch(`${API_BASE_URL}/agenda/remove/${eventId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${state.token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showToast(data.error, 'error');
+                    } else {
+                        showToast('Event removed from your agenda', 'success');
+                        
+                        // Update the modal buttons
+                        const addBtn = document.getElementById('addToAgendaBtn');
+                        const removeBtn = document.getElementById('removeFromAgendaBtn');
+                        
+                        addBtn.classList.remove('hidden');
+                        removeBtn.classList.add('hidden');
+                        
+                        // Refresh the agenda
+                        if (state.currentOpenDay) {
+                            fetchUserAgenda(state.currentOpenDay.id);
+                        } else {
+                            fetchUserAgenda();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing event from agenda:', error);
+                    showToast('Error removing event from agenda', 'error');
+                });
+            }
+            
+            // Fetch subject areas
+            function fetchSubjectAreas() {
+                console.log("Fetching subject areas...");
+                
+                // Define fallback data
+                const fallbackData = [
+                    { id: 1, name: "Business and Management" },
+                    { id: 2, name: "Computing and Computer Science" },
+                    { id: 3, name: "Education and Teaching" },
+                    { id: 4, name: "Engineering" },
+                    { id: 5, name: "Health and Social Care" },
+                    { id: 6, name: "Law" },
+                    { id: 7, name: "Science" },
+                    { id: 8, name: "Arts and Humanities" }
+                ];
+                
+                fetch(`${API_BASE_URL}/courses/subject-areas`)
+                    .then(response => {
+                        console.log("Subject areas response:", response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Subject areas data received:", data);
+                        if (data.subject_areas && data.subject_areas.length > 0) {
+                            // Use real data
+                            state.subjectAreas = data.subject_areas;
+                            renderSubjectAreas(data.subject_areas);
+                        } else {
+                            // Use fallback data
+                            console.log("Using fallback subject area data");
+                            state.subjectAreas = fallbackData;
+                            renderSubjectAreas(fallbackData);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Detailed subject areas error:", error);
+                        // Use fallback data on error
+                        console.log("Using fallback subject area data due to error");
+                        state.subjectAreas = fallbackData;
+                        renderSubjectAreas(fallbackData);
+                    });
+            }
+            
+            // UI Rendering Functions
+            
+            // Render upcoming open days on the home page
+            function renderUpcomingOpenDays(openDays) {
+                const container = document.getElementById('upcomingOpenDays');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                if (openDays.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-8">
+                            <p class="text-gray-500 dark:text-gray-400">No upcoming open days scheduled.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                openDays.forEach(openDay => {
+                    const date = new Date(openDay.event_date);
+                    const formattedDate = date.toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    
+                    const openDayCard = document.createElement('div');
+                    openDayCard.className = 'bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow';
+                    openDayCard.innerHTML = `
+                        <div class="bg-wlv-blue text-white p-4">
+                            <h3 class="font-semibold">${formattedDate}</h3>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold mb-2">${openDay.title}</h3>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">${openDay.description || 'Join us for our open day and discover what makes the University of Wolverhampton special.'}</p>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-500 dark:text-gray-400">
+                                    <i class="far fa-clock mr-1"></i>${openDay.start_time} - ${openDay.end_time}
+                                </span>
+                                <a href="#" data-page="open-day-detail" data-id="${openDay.id}" class="text-primary hover:text-primary-dark">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(openDayCard);
+                });
+            }
+            
+            // Render open days list on the open days page
+            function renderOpenDaysList(openDays) {
+                const container = document.getElementById('openDaysList');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                if (openDays.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <p class="text-gray-500 dark:text-gray-400">No open days currently scheduled.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                openDays.forEach(openDay => {
+                    const date = new Date(openDay.event_date);
+                    const formattedDate = date.toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    
+                    // Check if registration is still open
+                    const now = new Date();
+                    const registrationDeadline = openDay.registration_deadline ? new Date(openDay.registration_deadline) : new Date(openDay.event_date);
+                    const isRegistrationOpen = now < registrationDeadline;
+                    
+                    const openDayItem = document.createElement('div');
+                    openDayItem.className = 'bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col md:flex-row gap-6';
+                    openDayItem.innerHTML = `
+                        <div class="w-full md:w-1/4">
+                            <div class="bg-wlv-blue text-white rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold">${date.getDate()}</div>
+                                <div>${date.toLocaleDateString('en-GB', { month: 'long' })}</div>
+                                <div class="text-sm">${date.toLocaleDateString('en-GB', { weekday: 'long' })}</div>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-3/4">
+                            <h3 class="text-xl font-semibold mb-2">${openDay.title}</h3>
+                            <p class="text-gray-600 dark:text-gray-300 mb-4">${openDay.description || 'Join us for our open day and discover what makes the University of Wolverhampton special.'}</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <div class="flex items-center text-gray-600 dark:text-gray-300 text-sm">
+                                    <i class="far fa-clock mr-1"></i>
+                                    <span>${openDay.start_time} - ${openDay.end_time}</span>
+                                </div>
+                                <div class="flex items-center text-gray-600 dark:text-gray-300 text-sm">
+                                    <i class="far fa-map-marker mr-1"></i>
+                                    <span>${openDay.location || 'City Campus'}</span>
+                                </div>
+                                ${openDay.is_virtual ? `
+                                    <div class="flex items-center text-gray-600 dark:text-gray-300 text-sm">
+                                        <i class="fas fa-laptop mr-1"></i>
+                                        <span>Virtual Event</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="flex flex-wrap gap-3">
+                                <a href="#" data-page="open-day-detail" data-id="${openDay.id}" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded transition-colors">
+                                    View Details
+                                </a>
+                                ${isRegistrationOpen ? `
+                                    <button class="register-btn border border-primary text-primary hover:bg-primary hover:text-white px-4 py-2 rounded transition-colors" data-open-day-id="${openDay.id}">
+                                        Register Now
+                                    </button>
+                                ` : `
+                                    <button disabled class="cursor-not-allowed bg-gray-300 text-gray-700 dark:bg-gray-700 dark:text-gray-400 px-4 py-2 rounded">
+                                        Registration Closed
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(openDayItem);
+                });
+                
+                // Add event listeners to register buttons
+                document.querySelectorAll('.register-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const openDayId = this.getAttribute('data-open-day-id');
+                        if (state.isAuthenticated) {
+                            navigateTo('open-day-detail', openDayId);
+                        } else {
+                            showAuthModal('login');
+                        }
+                    });
+                });
+            }
+            
+            // Render open day header on the detail page
+            function renderOpenDayHeader(openDay) {
+                const header = document.getElementById('openDayHeader');
+                if (!header) return;
+                
+                const date = new Date(openDay.event_date);
+                const formattedDate = date.toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+                
+                header.innerHTML = `
+                    <h1 class="text-2xl md:text-3xl font-bold mb-2">${openDay.title}</h1>
+                    <p class="mb-1"><i class="far fa-calendar-alt mr-2"></i>${formattedDate}</p>
+                    <p class="mb-1"><i class="far fa-clock mr-2"></i>${openDay.start_time} - ${openDay.end_time}</p>
+                    <p><i class="far fa-map-marker mr-2"></i>${openDay.location || 'City Campus'}</p>
+                `;
+                
+                // Update description in the information tab
+                const descriptionElem = document.getElementById('openDayDescription');
+                if (descriptionElem) {
+                    descriptionElem.textContent = openDay.description || 'Join us for our open day and discover what makes the University of Wolverhampton special. You\'ll have the opportunity to tour our facilities, speak with academic staff, and get a feel for student life on campus.';
+                }
+                
+                // Update campus address in the location tab
+                const addressElem = document.getElementById('campusAddress');
+                if (addressElem) {
+                    addressElem.textContent = openDay.location === 'Walsall Campus' 
+                        ? 'Walsall Campus, Gorway Road, Walsall, WS1 3BD'
+                        : openDay.location === 'Telford Campus'
+                            ? 'Telford Campus, Shifnal Road, Priorslee, Telford, TF2 9NN'
+                            : 'City Campus, Wulfruna Street, Wolverhampton, WV1 1LY';
+                }
+                
+                // Fetch buildings for this campus
+                fetchBuildings(openDay.location);
+            }
+            
+            // Render events on the open day detail page
+            function renderEvents(events) {
+                if (events.length === 0) {
+                    // Display "no events" message in both views
+                    const timelineView = document.getElementById('timeline-view');
+                    const gridView = document.getElementById('grid-view');
+                    
+                    const noEventsMsg = `
+                        <div class="text-center py-8">
+                            <p class="text-gray-500 dark:text-gray-400">No events scheduled for this open day yet.</p>
+                        </div>
+                    `;
+                    
+                    if (timelineView) timelineView.innerHTML = noEventsMsg;
+                    if (gridView) gridView.innerHTML = noEventsMsg;
+                    return;
+                }
+                
+                // Group events by start time for the timeline view
+                const eventsByTime = {};
+                events.forEach(event => {
+                    if (!eventsByTime[event.start_time]) {
+                        eventsByTime[event.start_time] = [];
+                    }
+                    eventsByTime[event.start_time].push(event);
+                });
+                
+                // Render timeline view
+                renderTimelineView(eventsByTime);
+                
+                // Render grid view
+                renderGridView(events);
+                
+                // Set up event filter
+                setupEventFilter(events);
+            }
+            
+            // Render timeline view of events
+            function renderTimelineView(eventsByTime) {
+                const timelineView = document.getElementById('timeline-view');
+                if (!timelineView) return;
+                
+                timelineView.innerHTML = '';
+                
+                // Sort time slots chronologically
+                const sortedTimes = Object.keys(eventsByTime).sort();
+                
+                sortedTimes.forEach(time => {
+                    const events = eventsByTime[time];
+                    
+                    // Create time header
+                    const timeHeader = document.createElement('h3');
+                    timeHeader.className = 'font-semibold text-lg mb-3 mt-8 first:mt-0';
+                    timeHeader.textContent = formatTime(time);
+                    timelineView.appendChild(timeHeader);
+                    
+                    // Create timeline container
+                    const timeline = document.createElement('div');
+                    timeline.className = 'timeline relative pl-8';
+                    timelineView.appendChild(timeline);
+                    
+                    // Add events to timeline
+                    events.forEach(event => {
+                        const timelineItem = document.createElement('div');
+                        timelineItem.className = 'timeline-item pb-6';
+                        timelineItem.setAttribute('data-event-type', event.event_type.toLowerCase());
+                        
+                        // Determine color based on event type
+                        let borderColor = '';
+                        switch(event.event_type.toLowerCase()) {
+                            case 'talk':
+                                borderColor = 'border-blue-500';
+                                break;
+                            case 'tour':
+                                borderColor = 'border-green-500';
+                                break;
+                            case 'workshop':
+                                borderColor = 'border-purple-500';
+                                break;
+                            default:
+                                borderColor = 'border-gray-500';
+                        }
+                        
+                        timelineItem.innerHTML = `
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content bg-white dark:bg-gray-700 rounded-lg shadow p-4 border-l-4 ${borderColor}">
+                                <div class="flex flex-wrap justify-between items-start gap-2 mb-2">
+                                    <h4 class="font-semibold">${event.title}</h4>
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded ${getEventTypeTagClass(event.event_type)}">
+                                        ${event.event_type}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">${event.description || 'No description available'}</p>
+                                <div class="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                    <span><i class="far fa-clock mr-1"></i>${formatTime(event.start_time)} - ${formatTime(event.end_time)}</span>
+                                    ${event.building ? `<span><i class="far fa-building mr-1"></i>${event.building.name}${event.room ? `, Room ${event.room}` : ''}</span>` : ''}
+                                    ${event.presenter ? `<span><i class="far fa-user mr-1"></i>${event.presenter}</span>` : ''}
+                                </div>
+                                <button class="view-event-btn mt-2 text-primary hover:text-primary-dark text-sm" data-event-id="${event.id}">
+                                    View Details
+                                </button>
+                            </div>
+                        `;
+                        
+                        timeline.appendChild(timelineItem);
+                    });
+                });
+                
+                // Add event listeners to view details buttons
+                document.querySelectorAll('.view-event-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const eventId = this.getAttribute('data-event-id');
+                        showEventModal(eventId);
+                    });
+                });
+            }
+            
+            // Render grid view of events
+            function renderGridView(events) {
+                const gridView = document.getElementById('grid-view');
+                if (!gridView) return;
+                
+                gridView.innerHTML = '';
+                
+                // Group events by type for the grid view
+                const eventsByType = {};
+                events.forEach(event => {
+                    if (!eventsByType[event.event_type]) {
+                        eventsByType[event.event_type] = [];
+                    }
+                    eventsByType[event.event_type].push(event);
+                });
+                
+                // Sort event types
+                const sortedTypes = Object.keys(eventsByType).sort();
+                
+                sortedTypes.forEach(type => {
+                    // Create type header
+                    const typeHeader = document.createElement('h3');
+                    typeHeader.className = 'font-semibold text-lg mb-3 mt-8 first:mt-0';
+                    typeHeader.textContent = type + 's';
+                    gridView.appendChild(typeHeader);
+                    
+                    // Create grid container
+                    const grid = document.createElement('div');
+                    grid.className = 'calendar-grid';
+                    gridView.appendChild(grid);
+                    
+                    // Add events to grid
+                    eventsByType[type].forEach(event => {
+                        // Determine color based on event type
+                        let borderColor = '';
+                        switch(type.toLowerCase()) {
+                            case 'talk':
+                                borderColor = 'border-blue-500';
+                                break;
+                            case 'tour':
+                                borderColor = 'border-green-500';
+                                break;
+                            case 'workshop':
+                                borderColor = 'border-purple-500';
+                                break;
+                            default:
+                                borderColor = 'border-gray-500';
+                        }
+                        
+                        const eventCard = document.createElement('div');
+                        eventCard.className = `calendar-event ${borderColor} bg-white dark:bg-gray-700 rounded-lg shadow p-4`;
+                        eventCard.setAttribute('data-event-type', type.toLowerCase());
+                        eventCard.innerHTML = `
+                            <h4 class="font-semibold mb-2">${event.title}</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">${event.description || 'No description available'}</p>
+                            <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span><i class="far fa-clock mr-1"></i>${formatTime(event.start_time)} - ${formatTime(event.end_time)}</span>
+                                ${event.building ? `<span><i class="far fa-building mr-1"></i>${event.building.name}${event.room ? `, Room ${event.room}` : ''}</span>` : ''}
+                            </div>
+                            <button class="view-event-btn mt-3 text-primary hover:text-primary-dark text-sm" data-event-id="${event.id}">
+                                View Details
+                            </button>
+                        `;
+                        
+                        grid.appendChild(eventCard);
+                    });
+                });
+                
+                // Add event listeners to view details buttons
+                document.querySelectorAll('.view-event-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const eventId = this.getAttribute('data-event-id');
+                        showEventModal(eventId);
+                    });
+                });
+            }
+            
+            // Set up event filter functionality
+            function setupEventFilter(events) {
+                const eventFilter = document.getElementById('eventFilter');
+                if (!eventFilter) return;
+                
+                // Extract unique event types
+                const eventTypes = [...new Set(events.map(event => event.event_type.toLowerCase()))];
+                
+                // Populate filter dropdown
+                eventFilter.innerHTML = '<option value="">All Events</option>';
+                eventTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+                    eventFilter.appendChild(option);
+                });
+                
+                // Add filter change event
+                eventFilter.addEventListener('change', function() {
+                    const filterValue = this.value.toLowerCase();
+                    
+                    // Filter timeline items
+                    document.querySelectorAll('.timeline-item').forEach(item => {
+                        if (!filterValue || item.getAttribute('data-event-type') === filterValue) {
+                            item.classList.remove('hidden');
+                        } else {
+                            item.classList.add('hidden');
+                        }
+                    });
+                    
+                    // Filter grid items
+                    document.querySelectorAll('.calendar-event').forEach(item => {
+                        if (!filterValue || item.getAttribute('data-event-type') === filterValue) {
+                            item.classList.remove('hidden');
+                        } else {
+                            item.classList.add('hidden');
+                        }
+                    });
+                });
+            }
+            
+            // Render my agenda section on the open day detail page
+            function renderMyAgendaSection(agendaItems) {
+                const myAgendaSection = document.getElementById('my-agenda-section');
+                const myAgendaItems = document.getElementById('myAgendaItems');
+                
+                if (!myAgendaSection || !myAgendaItems) return;
+                
+                // Show the section
+                myAgendaSection.classList.remove('hidden');
+                
+                // Clear the container
+                myAgendaItems.innerHTML = '';
+                
+                if (agendaItems.length === 0) {
+                    myAgendaItems.innerHTML = `
+                        <p class="text-gray-500 dark:text-gray-400 text-center py-4">No events added to your agenda yet.</p>
+                    `;
+                    return;
+                }
+                
+                // Sort agenda items by start time
+                agendaItems.sort((a, b) => a.start_time.localeCompare(b.start_time));
+                
+                // Render each agenda item
+                agendaItems.forEach(item => {
+                    const agendaItem = document.createElement('div');
+                    agendaItem.className = 'bg-white dark:bg-gray-700 rounded-lg shadow p-3 flex items-center';
+                    
+                    // Format time for display
+                    const startTime = formatTime(item.start_time);
+                    const endTime = formatTime(item.end_time);
+                    
+                    agendaItem.innerHTML = `
+                        <div class="mr-3 text-center">
+                            <div class="text-sm font-medium">${startTime}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">to ${endTime}</div>
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="font-medium">${item.title}</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                ${item.building ? `${item.building.name}${item.room ? `, Room ${item.room}` : ''}` : 'Location TBC'}
+                            </p>
+                        </div>
+                        <button class="remove-agenda-item p-1 text-red-500 hover:text-red-700" data-event-id="${item.id}" title="Remove from agenda">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    
+                    myAgendaItems.appendChild(agendaItem);
+                });
+                
+                // Add event listeners to remove buttons
+                document.querySelectorAll('.remove-agenda-item').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const eventId = this.getAttribute('data-event-id');
+                        removeFromAgenda(eventId);
+                    });
+                });
+                
+                // Set up download button
+                document.getElementById('downloadAgendaBtn').addEventListener('click', function() {
+                    // In a real app, this would generate a PDF or other format
+                    showToast('Download functionality will be implemented soon', 'info');
+                });
+            }
+            
+            // Render my agenda page
+            function renderMyAgendaPage(agendaItems) {
+                const container = document.getElementById('agendaContent');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                if (agendaItems.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <p class="text-gray-500 dark:text-gray-400 mb-4">You haven't added any events to your agenda yet.</p>
+                            <a href="#" data-page="open-days" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded transition-colors">
+                                Browse Open Days
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Group agenda items by open day
+                const itemsByOpenDay = {};
+                agendaItems.forEach(item => {
+                    if (!itemsByOpenDay[item.open_day_id]) {
+                        itemsByOpenDay[item.open_day_id] = {
+                            openDayId: item.open_day_id,
+                            openDayTitle: item.open_day_title || 'Open Day',
+                            openDayDate: item.open_day_date || 'Date TBC',
+                            items: []
+                        };
+                    }
+                    itemsByOpenDay[item.open_day_id].items.push(item);
+                });
+                
+                // Render agenda for each open day
+                Object.values(itemsByOpenDay).forEach(openDayAgenda => {
+                    const section = document.createElement('div');
+                    section.className = 'mb-8';
+                    
+                    // Create header
+                    const header = document.createElement('div');
+                    header.className = 'flex justify-between items-center mb-4';
+                    header.innerHTML = `
+                        <h2 class="text-xl font-semibold">${openDayAgenda.openDayTitle}</h2>
+                        <a href="#" data-page="open-day-detail" data-id="${openDayAgenda.openDayId}" class="text-primary hover:text-primary-dark">
+                            View Open Day
+                        </a>
+                    `;
+                    section.appendChild(header);
+                    
+                    // Sort items by start time
+                    openDayAgenda.items.sort((a, b) => a.start_time.localeCompare(b.start_time));
+                    
+                    // Create grid of events
+                    const grid = document.createElement('div');
+                    grid.className = 'calendar-grid';
+                    
+                    openDayAgenda.items.forEach(item => {
+                        // Determine color based on event type
+                        let borderColor = '';
+                        switch(item.event_type?.toLowerCase()) {
+                            case 'talk':
+                                borderColor = 'border-blue-500';
+                                break;
+                            case 'tour':
+                                borderColor = 'border-green-500';
+                                break;
+                            case 'workshop':
+                                borderColor = 'border-purple-500';
+                                break;
+                            default:
+                                borderColor = 'border-gray-500';
+                        }
+                        
+                        const card = document.createElement('div');
+                        card.className = `calendar-event ${borderColor} bg-white dark:bg-gray-700 rounded-lg shadow p-4 relative`;
+                        
+                        // Format time for display
+                        const startTime = formatTime(item.start_time);
+                        const endTime = formatTime(item.end_time);
+                        
+                        card.innerHTML = `
+                            <button class="absolute top-2 right-2 text-red-500 hover:text-red-700 remove-agenda-item" data-event-id="${item.id}" title="Remove from agenda">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <h4 class="font-semibold mb-2 pr-6">${item.title}</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">${item.description || 'No description available'}</p>
+                            <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span><i class="far fa-clock mr-1"></i>${startTime} - ${endTime}</span>
+                                ${item.building ? `<span><i class="far fa-building mr-1"></i>${item.building.name}${item.room ? `, Room ${item.room}` : ''}</span>` : ''}
+                            </div>
+                            <button class="view-event-btn mt-3 text-primary hover:text-primary-dark text-sm" data-event-id="${item.id}">
+                                View Details
+                            </button>
+                        `;
+                        
+                        grid.appendChild(card);
+                    });
+                    
+                    section.appendChild(grid);
+                    container.appendChild(section);
+                });
+                
+                // Add event listeners
+                document.querySelectorAll('.view-event-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const eventId = this.getAttribute('data-event-id');
+                        showEventModal(eventId);
+                    });
+                });
+                
+                document.querySelectorAll('.remove-agenda-item').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const eventId = this.getAttribute('data-event-id');
+                        removeFromAgenda(eventId);
+                    });
+                });
+                
+                // Set up export buttons
+                document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+                    showToast('PDF download functionality will be implemented soon', 'info');
+                });
+                
+                document.getElementById('addToCalendarBtn').addEventListener('click', function() {
+                    showToast('Calendar export functionality will be implemented soon', 'info');
+                });
+                
+                document.getElementById('emailAgendaBtn').addEventListener('click', function() {
+                    showToast('Email functionality will be implemented soon', 'info');
+                });
+            }
+            
+            // Render subject areas on the home page
+            function renderSubjectAreas(subjectAreas) {
+                const container = document.getElementById('subjectAreas');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                if (subjectAreas.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-4">
+                            <p class="text-gray-500 dark:text-gray-400">No subject areas available.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Display up to 8 subject areas
+                const displayedAreas = subjectAreas.slice(0, 8);
+                
+                displayedAreas.forEach(area => {
+                    const areaCard = document.createElement('div');
+                    areaCard.className = 'bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 hover:shadow-lg transition-shadow cursor-pointer';
+                    areaCard.setAttribute('data-page', 'subject-areas');
+                    
+                    // Get icon based on name
+                    let icon = 'fa-book';
+                    if (area.name.toLowerCase().includes('business')) icon = 'fa-briefcase';
+                    else if (area.name.toLowerCase().includes('computer') || area.name.toLowerCase().includes('computing')) icon = 'fa-laptop-code';
+                    else if (area.name.toLowerCase().includes('art')) icon = 'fa-palette';
+                    else if (area.name.toLowerCase().includes('science')) icon = 'fa-flask';
+                    else if (area.name.toLowerCase().includes('health') || area.name.toLowerCase().includes('nursing')) icon = 'fa-heartbeat';
+                    else if (area.name.toLowerCase().includes('law')) icon = 'fa-balance-scale';
+                    else if (area.name.toLowerCase().includes('education')) icon = 'fa-graduation-cap';
+                    else if (area.name.toLowerCase().includes('sport')) icon = 'fa-running';
+                    
+                    areaCard.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                                <i class="fas ${icon}"></i>
+                            </div>
+                            <h3 class="font-medium">${area.name}</h3>
+                        </div>
+                    `;
+                    
+                    container.appendChild(areaCard);
+                });
+            }
+            
+            // Fetch buildings for a campus
+            function fetchBuildings(campus) {
+                // Default to City Campus if not specified
+                const campusParam = campus || 'City Campus';
+                
+                fetch(`${API_BASE_URL}/maps/buildings?campus=${encodeURIComponent(campusParam)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.buildings) {
+                            // Update the state
+                            state.buildings = data.buildings;
+                            
+                            // Update the UI
+                            renderBuildings(data.buildings);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching buildings:', error);
+                    });
+            }
+            
+            // Render buildings in the location tab
+            function renderBuildings(buildings) {
+                const buildingsList = document.getElementById('buildingsList');
+                if (!buildingsList) return;
+                
+                buildingsList.innerHTML = '';
+                
+                if (buildings.length === 0) {
+                    buildingsList.innerHTML = `
+                        <li class="text-gray-500 dark:text-gray-400">No buildings information available.</li>
+                    `;
+                    return;
+                }
+                
+                buildings.forEach(building => {
+                    const buildingItem = document.createElement('li');
+                    buildingItem.className = 'flex items-start';
+                    buildingItem.innerHTML = `
+                        <i class="fas fa-building text-primary mt-1 mr-2"></i>
+                        <div>
+                            <span class="font-medium">${building.name}</span>
+                            ${building.description ? `<p class="text-sm text-gray-600 dark:text-gray-400">${building.description}</p>` : ''}
+                        </div>
+                    `;
+                    
+                    buildingsList.appendChild(buildingItem);
+                });
+            }
+            
+            // Helper Functions
+            
+            // Get CSS class for event type tag
+            function getEventTypeTagClass(eventType) {
+                switch(eventType.toLowerCase()) {
+                    case 'talk':
+                        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+                    case 'tour':
+                        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+                    case 'workshop':
+                        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+                    default:
+                        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+                }
+            }
+            
+            // Show toast notification
+            function showToast(message, type = 'success') {
+                // Create toast element
+                const toast = document.createElement('div');
+                toast.className = 'toast rounded-lg p-4 shadow-lg flex items-center space-x-3 max-w-xs';
+                
+                // Set color based on type
+                let iconClass = '';
+                switch(type) {
+                    case 'success':
+                        toast.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200');
+                        iconClass = 'fas fa-check-circle text-green-500 dark:text-green-400';
+                        break;
+                    case 'error':
+                        toast.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-200');
+                        iconClass = 'fas fa-exclamation-circle text-red-500 dark:text-red-400';
+                        break;
+                    case 'warning':
+                        toast.classList.add('bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-200');
+                        iconClass = 'fas fa-exclamation-triangle text-yellow-500 dark:text-yellow-400';
+                        break;
+                    case 'info':
+                    default:
+                        toast.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:text-blue-200');
+                        iconClass = 'fas fa-info-circle text-blue-500 dark:text-blue-400';
+                }
+                
+                // Set content
+                toast.innerHTML = `
+                    <i class="${iconClass}"></i>
+                    <div>${message}</div>
+                `;
+                
+                // Add to container
+                toastContainer.appendChild(toast);
+                
+                // Remove after animation completes
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
